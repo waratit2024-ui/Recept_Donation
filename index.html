@@ -940,7 +940,7 @@
         // ==========================================
         // Main Form Section
         // ==========================================
-        function DonationForm({ loggedInUser, userRole, onSave, showNotification, settings }) {
+function DonationForm({ loggedInUser, userRole, onSave, showNotification, settings }) {
             const [name, setName] = useState('');
             const [method, setMethod] = useState((userRole === 'staff' || userRole === 'admin') ? 'เงินสด' : 'เงินโอน');
             const [generalNote, setGeneralNote] = useState('');
@@ -993,7 +993,12 @@
                 const file = e.target.files[0];
                 if (file) {
                     setIsUploading(true);
-                    try { const resized = await resizeImage(file); setSlipImage(resized); } catch (err) { showNotification("ไม่สามารถอ่านไฟล์ภาพได้", 'error'); }
+                    try { 
+                        const resized = await resizeImage(file); 
+                        setSlipImage(resized); 
+                    } catch (err) { 
+                        showNotification("ไม่สามารถอ่านไฟล์ภาพได้", 'error'); 
+                    }
                     setIsUploading(false);
                 }
             };
@@ -1058,7 +1063,10 @@
             };
 
             const resetForm = () => {
-                setName(''); setMethod((userRole === 'staff' || userRole === 'admin') ? 'เงินสด' : 'เงินโอน'); setGeneralNote(''); setSlipImage(null);
+                setName(''); 
+                setMethod((userRole === 'staff' || userRole === 'admin') ? 'เงินสด' : 'เงินโอน'); 
+                setGeneralNote(''); 
+                setSlipImage(null);
                 const resetItems = {};
                 Object.keys(selectedItems).forEach(key => {
                     resetItems[key] = { ...selectedItems[key], checked: false, amount: '', quantity: 1, date: '', note: '' };
@@ -1073,12 +1081,10 @@
                         <div className={`w-20 h-20 bg-${theme}-100 rounded-full flex items-center justify-center mx-auto mb-6`}><HeartHandshake className={`w-10 h-10 text-${theme}-600`} /></div>
                         <h2 className={`text-2xl font-bold text-${theme}-700 mb-4`}>อนุโมทนาบุญ</h2>
                         <p className="text-gray-600 text-lg leading-relaxed mb-8">{settings.messages?.thankYou || 'ขอขอบคุณที่ร่วมทำบุญ'}</p>
-                        
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <button onClick={resetForm} className={`bg-${theme}-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-${theme}-700 transition`}>
                                 กลับสู่หน้าหลัก
                             </button>
-                            
                         </div>
                         {showETaxModal && <ETaxModal onClose={() => setShowETaxModal(false)} />}
                     </div>
@@ -1095,62 +1101,141 @@
             }
 
             return (
-                <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden no-print">
+                // ปรับขนาดคอนเทนเนอร์ให้กว้างขึ้นเพื่อรองรับ 2 คอลัมน์ (max-w-5xl)
+                <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-md overflow-hidden no-print">
                     <div className={`bg-${theme}-100 px-6 py-4 border-b border-${theme}-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2`}>
                         <h2 className={`text-xl font-semibold text-${theme}-800 flex items-center`}><PlusCircle className="w-6 h-6 mr-2 shrink-0" /> {userRole === 'donor' ? 'ฟอร์มแจ้งความประสงค์บริจาค' : 'บันทึกรับเงินบริจาค'}</h2>
                         <span className="text-xs sm:text-sm text-gray-500 bg-white px-3 py-1 rounded-full border">{userRole === 'donor' ? 'รอตรวจสอบ' : 'อนุมัติอัตโนมัติ'}</span>
                     </div>
-                    <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                        <div className="grid grid-cols-2 gap-4 text-sm text-gray-500 bg-gray-50 p-3 rounded-lg border">
+                    
+                    <form onSubmit={handleSubmit} className="p-6">
+                        
+                        {/* ข้อมูล Header ฟอร์ม */}
+                        <div className="grid grid-cols-2 gap-4 text-sm text-gray-500 bg-gray-50 p-3 rounded-lg border mb-6">
                             <div><span className="font-semibold">ID:</span> อัตโนมัติ</div>
                             <div><span className="font-semibold">ผู้บันทึก:</span> {loggedInUser ? loggedInUser.name : 'ผู้บริจาค (ออนไลน์)'}</div>
                         </div>
-                        <div><label className="block text-sm font-medium text-gray-700 mb-1">ชื่อ - สกุล ผู้บริจาค <span className="text-red-500">*</span></label><input type="text" required className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-${theme}-500 outline-none`} value={name} onChange={e => setName(e.target.value)} placeholder="เช่น นายบุญเรือง จิตใส" /></div>
-                        <div className="space-y-3">
-                            <label className="block text-sm font-medium text-gray-700">เลือกประเภทการบริจาค</label>
-                            {donationTypes.filter(t => t.active).map(type => {
-                                const itemState = selectedItems[type.id] || { checked: false, quantity: 1, amount: '' };
-                                const isChecked = itemState.checked;
-                                if (type.isSpecial && type.id === 'roong_taan') {
-                                    return (
-                                        <div key={type.id} className={`p-3 rounded-lg border transition-colors ${isChecked ? `bg-${theme}-50 border-${theme}-300` : 'border-gray-200 hover:bg-gray-50'}`}>
-                                            <div className="flex items-center mb-2"><input type="checkbox" className={`w-5 h-5 text-${theme}-600 rounded border-gray-300 focus:ring-${theme}-500`} checked={isChecked} onChange={e => setSelectedItems({...selectedItems, [type.id]: {...itemState, checked: e.target.checked}})} /><span className="ml-2 font-medium">{type.name}</span></div>
-                                            {isChecked && (<div className="ml-7 space-y-2"><input type="date" className="w-full p-2 border border-gray-300 rounded outline-none text-sm" value={itemState.date || ''} onChange={e => setSelectedItems({...selectedItems, [type.id]: {...itemState, date: e.target.value}})} required /><input type="text" placeholder="ระบุสิ่งของ" className="w-full p-2 border border-gray-300 rounded outline-none text-sm" value={itemState.note || ''} onChange={e => setSelectedItems({...selectedItems, [type.id]: {...itemState, note: e.target.value}})} required /></div>)}
-                                        </div>
-                                    );
-                                }
-                                return (
-                                    <div key={type.id} className={`p-3 rounded-lg border transition-colors ${isChecked ? `bg-${theme}-50 border-${theme}-300` : 'border-gray-200 hover:bg-gray-50'}`}>
-                                        <div className="flex items-center mb-2 justify-between">
-                                            <div className="flex items-center"><input type="checkbox" className={`w-5 h-5 text-${theme}-600 rounded border-gray-300 focus:ring-${theme}-500`} checked={isChecked} onChange={e => setSelectedItems({...selectedItems, [type.id]: {...itemState, checked: e.target.checked}})} /><span className="ml-2 font-medium">{type.name} {type.hasQuantity && `(${type.price}.-)`}</span></div>
-                                            {isChecked && type.hasQuantity && <span className={`text-${theme}-600 font-bold`}>{itemState.quantity * type.price} บ.</span>}
-                                        </div>
-                                        {isChecked && (<div className="ml-7 flex items-center gap-2">{type.hasQuantity ? (<><button type="button" className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300" onClick={() => setSelectedItems(prev => ({...prev, [type.id]: {...itemState, quantity: Math.max(1, (itemState.quantity || 1) - 1)}}))}>-</button><input type="number" min="1" className="w-16 text-center border-none bg-transparent font-bold" value={itemState.quantity || 1} readOnly /><button type="button" className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300" onClick={() => setSelectedItems(prev => ({...prev, [type.id]: {...itemState, quantity: (itemState.quantity || 1) + 1}}))}>+</button><span className="text-gray-500">{type.unit}</span></>) : (<><input type="number" min="1" placeholder="ระบุจำนวนเงิน" className="w-full p-2 border border-gray-300 rounded outline-none" value={itemState.amount} onChange={e => setSelectedItems({...selectedItems, [type.id]: {...itemState, amount: e.target.value}})} /><span className="text-gray-500">บาท</span></>)}</div>)}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        <div className={`bg-${theme}-50 p-4 rounded-xl flex justify-between items-center border border-${theme}-100`}><span className="text-gray-700 font-semibold">ยอดรวมทั้งสิ้น</span><span className={`text-2xl font-bold text-${theme}-600`}>{totalAmount.toLocaleString()} บาท</span></div>
-                        <div><label className="block text-sm font-medium text-gray-700 mb-1">ช่องทางการบริจาค</label><select className="w-full p-2 border border-gray-300 rounded outline-none bg-white" value={method} onChange={e => setMethod(e.target.value)}><option value="เงินโอน">โอนเงินเข้าบัญชีวัด</option><option value="เงินสด">เงินสด</option><option value="อื่นๆ">อื่นๆ</option></select></div>
-                        <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
-                            {(userRole === 'staff' || userRole === 'admin') ? (<div className="flex items-center justify-center text-green-600 gap-2 py-2"><CheckCircle className="w-5 h-5" /><span className="font-medium">พร้อมบันทึกรายการรับเงิน</span></div>) : method === 'เงินโอน' ? (
-                                <div className="space-y-4 text-center">
-                                    <div className="animate-fade-in"><p className="text-sm font-bold text-gray-700 mb-2">1. สแกน QR Code เพื่อโอนเงิน</p><div className="bg-white p-3 rounded-lg shadow-sm border inline-block"><img src={settings.qrCodeUrl} alt="QR Code" className="w-40 h-40 object-contain" /></div><p className="text-xs text-gray-500 mt-1">{settings.bankInfo?.bankName} | {settings.bankInfo?.accountName}</p><p className={`text-lg font-mono font-bold text-${theme}-700 mt-1 select-all`}>{settings.bankInfo?.accountNumber}</p></div>
-                                    <div className="border-t border-gray-200 pt-4"><p className="text-sm font-bold text-gray-700 mb-2">{settings.requireSlip !== false ? '2. แนบหลักฐานการโอน *' : '2. แนบหลักฐานการโอน (ถ้ามี)'}</p><label className="cursor-pointer block border-2 border-dashed border-gray-300 rounded-lg p-4 hover:bg-gray-100 transition"><div className="flex flex-col items-center justify-center">{isUploading ? <Loader className="w-6 h-6 animate-spin text-gray-400" /> : <UploadCloud className="w-6 h-6 text-gray-400 mb-1" />}<span className="text-sm text-gray-600">{slipImage ? 'เปลี่ยนรูปสลิป' : 'คลิกเพื่อเลือกรูปสลิป'}</span></div><input type="file" accept="image/*" className="hidden" onChange={handleFileChange} /></label>{slipImage && (<div className="mt-3 relative inline-block"><img src={slipImage} alt="Preview" className="h-24 object-contain rounded border bg-white" /><button type="button" onClick={() => setSlipImage(null)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow hover:bg-red-600"><X className="w-3 h-3" /></button></div>)}</div>
+
+                        {/* --- เริ่มต้น Grid 2 คอลัมน์ (หน้าจอคอมจะเป็น 2 คอลัมน์, มือถือจะเป็น 1 คอลัมน์) --- */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            
+                            {/* คอลัมน์ซ้าย: รายการบริจาค */}
+                            <div className="space-y-3">
+                                <label className="block text-sm font-bold text-gray-700 bg-gray-100 p-2 rounded">1. เลือกประเภทการบริจาค</label>
+                                <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {donationTypes.filter(t => t.active).map(type => {
+                                        const itemState = selectedItems[type.id] || { checked: false, quantity: 1, amount: '' };
+                                        const isChecked = itemState.checked;
+                                        if (type.isSpecial && type.id === 'roong_taan') {
+                                            return (
+                                                <div key={type.id} className={`p-3 rounded-lg border transition-colors ${isChecked ? `bg-${theme}-50 border-${theme}-300` : 'border-gray-200 hover:bg-gray-50'}`}>
+                                                    <div className="flex items-center mb-2"><input type="checkbox" className={`w-5 h-5 text-${theme}-600 rounded border-gray-300 focus:ring-${theme}-500`} checked={isChecked} onChange={e => setSelectedItems({...selectedItems, [type.id]: {...itemState, checked: e.target.checked}})} /><span className="ml-2 font-medium">{type.name}</span></div>
+                                                    {isChecked && (<div className="ml-7 space-y-2"><input type="date" className="w-full p-2 border border-gray-300 rounded outline-none text-sm" value={itemState.date || ''} onChange={e => setSelectedItems({...selectedItems, [type.id]: {...itemState, date: e.target.value}})} required /><input type="text" placeholder="ระบุสิ่งของ" className="w-full p-2 border border-gray-300 rounded outline-none text-sm" value={itemState.note || ''} onChange={e => setSelectedItems({...selectedItems, [type.id]: {...itemState, note: e.target.value}})} required /></div>)}
+                                                </div>
+                                            );
+                                        }
+                                        return (
+                                            <div key={type.id} className={`p-3 rounded-lg border transition-colors ${isChecked ? `bg-${theme}-50 border-${theme}-300` : 'border-gray-200 hover:bg-gray-50'}`}>
+                                                <div className="flex items-center mb-2 justify-between">
+                                                    <div className="flex items-center"><input type="checkbox" className={`w-5 h-5 text-${theme}-600 rounded border-gray-300 focus:ring-${theme}-500`} checked={isChecked} onChange={e => setSelectedItems({...selectedItems, [type.id]: {...itemState, checked: e.target.checked}})} /><span className="ml-2 font-medium">{type.name} {type.hasQuantity && `(${type.price}.-)`}</span></div>
+                                                    {isChecked && type.hasQuantity && <span className={`text-${theme}-600 font-bold`}>{itemState.quantity * type.price} บ.</span>}
+                                                </div>
+                                                {isChecked && (<div className="ml-7 flex items-center gap-2">{type.hasQuantity ? (<><button type="button" className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300" onClick={() => setSelectedItems(prev => ({...prev, [type.id]: {...itemState, quantity: Math.max(1, (itemState.quantity || 1) - 1)}}))}>-</button><input type="number" min="1" className="w-16 text-center border-none bg-transparent font-bold" value={itemState.quantity || 1} readOnly /><button type="button" className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300" onClick={() => setSelectedItems(prev => ({...prev, [type.id]: {...itemState, quantity: (itemState.quantity || 1) + 1}}))}>+</button><span className="text-gray-500">{type.unit}</span></>) : (<><input type="number" min="1" placeholder="ระบุจำนวนเงิน" className="w-full p-2 border border-gray-300 rounded outline-none" value={itemState.amount} onChange={e => setSelectedItems({...selectedItems, [type.id]: {...itemState, amount: e.target.value}})} /><span className="text-gray-500">บาท</span></>)}</div>)}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-                            ) : (<div className="flex flex-col items-center justify-center text-gray-500 py-4"><ShoppingBag className="w-12 h-12 mb-2 opacity-30" /><p className="text-sm">กรุณานำเงินสดมาบริจาคที่จุดรับบริจาค</p></div>)}
-                        </div>
-                        <div>
-                            <div className="flex justify-between items-center mb-1">
-                                <label className="block text-sm font-medium text-gray-700">หมายเหตุเพิ่มเติม / คำอวยพร</label>
-                                <button type="button" onClick={handleGenerateBlessing} disabled={isGeneratingBlessing || !name} className="text-xs bg-orange-50 text-orange-600 hover:bg-orange-100 px-2 py-1 rounded flex items-center transition disabled:opacity-50 font-medium border border-orange-200">
-                                    {isGeneratingBlessing ? <Loader className="w-3 h-3 animate-spin mr-1"/> : <Sparkles className="w-3 h-3 mr-1"/>}
-                                    สร้างคำอวยพร ✨
-                                </button>
                             </div>
-                            <textarea rows="2" className="w-full p-2 border border-gray-300 rounded outline-none" value={generalNote} onChange={e => setGeneralNote(e.target.value)} placeholder="ข้อความเพิ่มเติม..."></textarea>
+
+                            {/* คอลัมน์ขวา: รายละเอียด & การชำระเงิน */}
+                            <div className="space-y-5">
+                                <label className="block text-sm font-bold text-gray-700 bg-gray-100 p-2 rounded">2. ข้อมูลผู้บริจาค และ การชำระเงิน</label>
+                                
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อ - สกุล ผู้บริจาค <span className="text-red-500">*</span></label>
+                                    <input type="text" required className={`w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${theme}-500 outline-none text-lg`} value={name} onChange={e => setName(e.target.value)} placeholder="เช่น นายบุญเรือง จิตใส" />
+                                </div>
+
+                                <div className={`bg-${theme}-50 p-4 rounded-xl flex justify-between items-center border border-${theme}-200 shadow-inner`}>
+                                    <span className="text-gray-700 font-bold">ยอดรวมทั้งสิ้น</span>
+                                    <span className={`text-3xl font-black text-${theme}-600`}>{totalAmount.toLocaleString()} บาท</span>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">ช่องทางการรับเงิน</label>
+                                    <select className="w-full p-3 border border-gray-300 rounded-lg outline-none bg-white font-medium" value={method} onChange={e => setMethod(e.target.value)}>
+                                        <option value="เงินสด">💵 รับเงินสด ณ จุดบริการ</option>
+                                        <option value="เงินโอน">🏦 โอนเงินเข้าบัญชีวัด</option>
+                                        <option value="อื่นๆ">❓ อื่นๆ</option>
+                                    </select>
+                                </div>
+
+                                {/* ส่วนของหลักฐานการโอน (แสดงเฉพาะเมื่อเลือกโอนเงิน) */}
+                                <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
+                                    {(userRole === 'staff' || userRole === 'admin') ? (
+                                        <div className="flex items-center justify-center text-green-600 gap-2 py-2">
+                                            <CheckCircle className="w-6 h-6" />
+                                            <span className="font-bold">สถานะ: อนุมัติทันทีและออกใบเสร็จ</span>
+                                        </div>
+                                    ) : method === 'เงินโอน' ? (
+                                        <div className="space-y-4 text-center">
+                                            <div className="animate-fade-in">
+                                                <p className="text-sm font-bold text-gray-700 mb-2">สแกน QR Code เพื่อโอนเงิน</p>
+                                                <div className="bg-white p-3 rounded-lg shadow-sm border inline-block">
+                                                    <img src={settings.qrCodeUrl} alt="QR Code" className="w-32 h-32 object-contain" />
+                                                </div>
+                                                <p className="text-xs text-gray-500 mt-1">{settings.bankInfo?.bankName} | {settings.bankInfo?.accountName}</p>
+                                                <p className={`text-lg font-mono font-bold text-${theme}-700 mt-1 select-all`}>{settings.bankInfo?.accountNumber}</p>
+                                            </div>
+                                            <div className="border-t border-gray-200 pt-4">
+                                                <p className="text-sm font-bold text-gray-700 mb-2">{settings.requireSlip !== false ? 'แนบหลักฐานการโอน *' : 'แนบหลักฐานการโอน (ถ้ามี)'}</p>
+                                                <label className="cursor-pointer block border-2 border-dashed border-gray-300 rounded-lg p-4 hover:bg-gray-100 transition">
+                                                    <div className="flex flex-col items-center justify-center">
+                                                        {isUploading ? <Loader className="w-6 h-6 animate-spin text-gray-400" /> : <UploadCloud className="w-6 h-6 text-gray-400 mb-1" />}
+                                                        <span className="text-sm text-gray-600">{slipImage ? 'เปลี่ยนรูปสลิป' : 'คลิกเพื่อเลือกรูปสลิป'}</span>
+                                                    </div>
+                                                    <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                                                </label>
+                                                {slipImage && (
+                                                    <div className="mt-3 relative inline-block">
+                                                        <img src={slipImage} alt="Preview" className="h-24 object-contain rounded border bg-white" />
+                                                        <button type="button" onClick={() => setSlipImage(null)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow hover:bg-red-600"><X className="w-3 h-3" /></button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center text-gray-400 py-4">
+                                            <ShoppingBag className="w-10 h-10 mb-2 opacity-50" />
+                                            <p className="text-sm">รอรับเงินสดที่จุดบริการ</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <label className="block text-sm font-medium text-gray-700">หมายเหตุเพิ่มเติม / คำอวยพร</label>
+                                        <button type="button" onClick={handleGenerateBlessing} disabled={isGeneratingBlessing || !name} className={`text-xs bg-${theme}-50 text-${theme}-600 hover:bg-${theme}-100 px-2 py-1.5 rounded flex items-center transition disabled:opacity-50 font-medium border border-${theme}-200 shadow-sm`}>
+                                            {isGeneratingBlessing ? <Loader className="w-3 h-3 animate-spin mr-1"/> : <Sparkles className="w-3 h-3 mr-1"/>}
+                                            ร่างด้วย AI ✨
+                                        </button>
+                                    </div>
+                                    <textarea rows="2" className="w-full p-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-${theme}-500 text-sm" value={generalNote} onChange={e => setGeneralNote(e.target.value)} placeholder="ข้อความเพิ่มเติม..."></textarea>
+                                </div>
+
+                            </div>
                         </div>
-                        <button type="submit" disabled={isUploading || isGeneratingBlessing} className={`w-full text-white font-bold py-3 px-4 rounded hover:bg-${theme}-700 transition shadow-lg flex justify-center items-center text-lg ${(isUploading || isGeneratingBlessing) ? 'bg-gray-400' : `bg-${theme}-600`}`}>{(isUploading || isGeneratingBlessing) ? 'กำลังประมวลผล...' : <><CheckCircle className="w-6 h-6 mr-2 shrink-0" /> ยืนยันการบริจาค</>}</button>
+                        {/* --- จบส่วน Grid 2 คอลัมน์ --- */}
+
+                        <div className="mt-8 pt-6 border-t border-gray-200">
+                            <button type="submit" disabled={isUploading || isGeneratingBlessing} className={`w-full text-white font-bold py-4 px-4 rounded-xl hover:bg-${theme}-700 transition shadow-lg flex justify-center items-center text-xl ${(isUploading || isGeneratingBlessing) ? 'bg-gray-400 cursor-not-allowed' : `bg-${theme}-600`}`}>
+                                {(isUploading || isGeneratingBlessing) ? (
+                                    <>กำลังประมวลผล...</>
+                                ) : (
+                                    <><CheckCircle className="w-7 h-7 mr-2 shrink-0" /> ยืนยันข้อมูล และออกใบเสร็จ</>
+                                )}
+                            </button>
+                        </div>
                     </form>
                 </div>
             );
