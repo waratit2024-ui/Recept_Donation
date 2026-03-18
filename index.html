@@ -940,196 +940,154 @@
         // ==========================================
         // Main Form Section
         // ==========================================
-        <form 
-          onSubmit={handleSubmit} 
-          className={`p-6 gap-6 ${
-            (userRole === 'staff' || userRole === 'admin') 
-              ? 'grid grid-cols-1 md:grid-cols-2' 
-              : 'space-y-6'
-          }`}
-        >
-        
-          <div className="grid grid-cols-2 gap-4 text-sm text-gray-500 bg-gray-50 p-3 rounded-lg border md:col-span-2">
-            <div><span className="font-semibold">ID:</span> อัตโนมัติ</div>
-            <div><span className="font-semibold">ผู้บันทึก:</span> {loggedInUser ? loggedInUser.name : 'ผู้บริจาค (ออนไลน์)'}</div>
-          </div>
-        
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อ - สกุล ผู้บริจาค <span className="text-red-500">*</span></label>
-            <input 
-              type="text" 
-              required 
-              className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-${theme}-500 outline-none`} 
-              value={name} 
-              onChange={e => setName(e.target.value)} 
-              placeholder="เช่น นายบุญเรือง จิตใส" 
-            />
-          </div>
-        
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">ช่องทางการบริจาค</label>
-            <select 
-              className="w-full p-2 border border-gray-300 rounded outline-none bg-white" 
-              value={method} 
-              onChange={e => setMethod(e.target.value)}
-            >
-              <option value="เงินโอน">โอนเงินเข้าบัญชีวัด</option>
-              <option value="เงินสด">เงินสด</option>
-              <option value="อื่นๆ">อื่นๆ</option>
-            </select>
-          </div>
-        
-          <div className="space-y-3 md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">เลือกประเภทการบริจาค</label>
-        
-            {donationTypes.filter(t => t.active).map(type => {
-              const itemState = selectedItems[type.id] || { checked: false, quantity: 1, amount: '' };
-              const isChecked = itemState.checked;
-        
-              if (type.isSpecial && type.id === 'roong_taan') {
-                return (
-                  <div key={type.id} className={`p-3 rounded-lg border transition-colors ${isChecked ? `bg-${theme}-50 border-${theme}-300` : 'border-gray-200 hover:bg-gray-50'}`}>
-                    <div className="flex items-center mb-2">
-                      <input type="checkbox" className={`w-5 h-5 text-${theme}-600 rounded border-gray-300 focus:ring-${theme}-500`} 
-                        checked={isChecked} 
-                        onChange={e => setSelectedItems({...selectedItems, [type.id]: {...itemState, checked: e.target.checked}})} 
-                      />
-                      <span className="ml-2 font-medium">{type.name}</span>
+        function DonationForm({ loggedInUser, userRole, onSave, showNotification, settings }) {
+        const [name, setName] = useState('');
+        const [method, setMethod] = useState((userRole === 'staff' || userRole === 'admin') ? 'เงินสด' : 'เงินโอน');
+        const [generalNote, setGeneralNote] = useState('');
+        const [slipImage, setSlipImage] = useState(null); 
+        const [isUploading, setIsUploading] = useState(false);
+        const [isGeneratingBlessing, setIsGeneratingBlessing] = useState(false);
+        const [showThankYou, setShowThankYou] = useState(false);
+        const [selectedItems, setSelectedItems] = useState({});
+        const theme = settings.themeColor || 'orange';
+        const donationTypes = settings.donationTypes || [];
+    
+        useEffect(() => {
+            const initial = {};
+            donationTypes.forEach(type => {
+                if (type.active) {
+                    initial[type.id] = { checked: false, quantity: 1, amount: type.price || '' };
+                }
+            });
+            const roongTaan = donationTypes.find(t => t.id === 'roong_taan');
+            if (roongTaan && roongTaan.active) {
+                initial['roong_taan'] = { checked: false, date: '', note: '' };
+            }
+            setSelectedItems(prev => ({...initial, ...prev}));
+        }, [donationTypes]);
+    
+        useEffect(() => {
+            setMethod((userRole === 'staff' || userRole === 'admin') ? 'เงินสด' : 'เงินโอน');
+        }, [userRole]);
+    
+        const totalAmount = useMemo(() => {
+            let sum = 0;
+            donationTypes.forEach(type => {
+                if (selectedItems[type.id]?.checked && !type.isSpecial) {
+                    if (type.hasQuantity) {
+                        sum += (selectedItems[type.id].quantity || 1) * type.price;
+                    } else {
+                        sum += Number(selectedItems[type.id].amount || 0);
+                    }
+                }
+            });
+            return sum;
+        }, [selectedItems, donationTypes]);
+    
+        const handleSubmit = (e) => {
+            e.preventDefault();
+            if (!name) return showNotification('กรุณาระบุชื่อ', 'error');
+    
+            onSave({
+                name,
+                amount: totalAmount,
+                method,
+                generalNote
+            });
+    
+            setName('');
+            setGeneralNote('');
+        };
+    
+        return (
+            <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+                
+                <form 
+                    onSubmit={handleSubmit}
+                    className={`p-6 gap-6 ${
+                        (userRole === 'staff' || userRole === 'admin') 
+                            ? 'grid grid-cols-1 md:grid-cols-2' 
+                            : 'space-y-6'
+                    }`}
+                >
+    
+                    {/* HEADER */}
+                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-500 bg-gray-50 p-3 rounded-lg border md:col-span-2">
+                        <div>ID: อัตโนมัติ</div>
+                        <div>ผู้บันทึก: {loggedInUser?.name || 'ผู้บริจาค'}</div>
                     </div>
-        
-                    {isChecked && (
-                      <div className="ml-7 space-y-2">
-                        <input type="date" className="w-full p-2 border border-gray-300 rounded outline-none text-sm"
-                          value={itemState.date || ''} 
-                          onChange={e => setSelectedItems({...selectedItems, [type.id]: {...itemState, date: e.target.value}})} 
-                          required 
+    
+                    {/* NAME */}
+                    <div>
+                        <label>ชื่อผู้บริจาค *</label>
+                        <input 
+                            className="w-full p-2 border rounded"
+                            value={name}
+                            onChange={e => setName(e.target.value)}
                         />
-                        <input type="text" placeholder="ระบุสิ่งของ"
-                          className="w-full p-2 border border-gray-300 rounded outline-none text-sm"
-                          value={itemState.note || ''} 
-                          onChange={e => setSelectedItems({...selectedItems, [type.id]: {...itemState, note: e.target.value}})} 
-                          required 
+                    </div>
+    
+                    {/* METHOD */}
+                    <div>
+                        <label>ช่องทาง</label>
+                        <select 
+                            className="w-full p-2 border rounded"
+                            value={method}
+                            onChange={e => setMethod(e.target.value)}
+                        >
+                            <option value="เงินโอน">โอนเงิน</option>
+                            <option value="เงินสด">เงินสด</option>
+                        </select>
+                    </div>
+    
+                    {/* DONATION TYPES */}
+                    <div className="md:col-span-2 space-y-3">
+                        {donationTypes.map(type => (
+                            <div key={type.id} className="border p-3 rounded">
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedItems[type.id]?.checked || false}
+                                        onChange={() => {
+                                            setSelectedItems(prev => ({
+                                                ...prev,
+                                                [type.id]: {
+                                                    ...prev[type.id],
+                                                    checked: !prev[type.id]?.checked
+                                                }
+                                            }));
+                                        }}
+                                    />
+                                    {type.name}
+                                </label>
+                            </div>
+                        ))}
+                    </div>
+    
+                    {/* TOTAL */}
+                    <div className="md:col-span-2 flex justify-between bg-orange-50 p-4 rounded">
+                        <span>รวม</span>
+                        <span>{totalAmount} บาท</span>
+                    </div>
+    
+                    {/* NOTE */}
+                    <div className="md:col-span-2">
+                        <textarea 
+                            className="w-full p-2 border rounded"
+                            value={generalNote}
+                            onChange={e => setGeneralNote(e.target.value)}
                         />
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-        
-              return (
-                <div key={type.id} className={`p-3 rounded-lg border transition-colors ${isChecked ? `bg-${theme}-50 border-${theme}-300` : 'border-gray-200 hover:bg-gray-50'}`}>
-                  <div className="flex items-center mb-2 justify-between">
-                    <div className="flex items-center">
-                      <input type="checkbox" className={`w-5 h-5 text-${theme}-600 rounded border-gray-300 focus:ring-${theme}-500`} 
-                        checked={isChecked} 
-                        onChange={e => setSelectedItems({...selectedItems, [type.id]: {...itemState, checked: e.target.checked}})} 
-                      />
-                      <span className="ml-2 font-medium">{type.name} {type.hasQuantity && `(${type.price}.-)`}</span>
                     </div>
-        
-                    {isChecked && type.hasQuantity && (
-                      <span className={`text-${theme}-600 font-bold`}>
-                        {itemState.quantity * type.price} บ.
-                      </span>
-                    )}
-                  </div>
-        
-                  {isChecked && (
-                    <div className="ml-7 flex items-center gap-2">
-                      {type.hasQuantity ? (
-                        <>
-                          <button type="button" className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                            onClick={() => setSelectedItems(prev => ({
-                              ...prev,
-                              [type.id]: {...itemState, quantity: Math.max(1, (itemState.quantity || 1) - 1)}
-                            }))}>-</button>
-        
-                          <input type="number" min="1" className="w-16 text-center border-none bg-transparent font-bold"
-                            value={itemState.quantity || 1} readOnly />
-        
-                          <button type="button" className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                            onClick={() => setSelectedItems(prev => ({
-                              ...prev,
-                              [type.id]: {...itemState, quantity: (itemState.quantity || 1) + 1}
-                            }))}>+</button>
-        
-                          <span className="text-gray-500">{type.unit}</span>
-                        </>
-                      ) : (
-                        <>
-                          <input type="number" min="1" placeholder="ระบุจำนวนเงิน"
-                            className="w-full p-2 border border-gray-300 rounded outline-none"
-                            value={itemState.amount}
-                            onChange={e => setSelectedItems({...selectedItems, [type.id]: {...itemState, amount: e.target.value}})}
-                          />
-                          <span className="text-gray-500">บาท</span>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        
-          <div className={`bg-${theme}-50 p-4 rounded-xl flex justify-between items-center border border-${theme}-100 md:col-span-2`}>
-            <span className="text-gray-700 font-semibold">ยอดรวมทั้งสิ้น</span>
-            <span className={`text-2xl font-bold text-${theme}-600`}>
-              {totalAmount.toLocaleString()} บาท
-            </span>
-          </div>
-        
-          <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 md:col-span-2">
-            {(userRole === 'staff' || userRole === 'admin') ? (
-              <div className="flex items-center justify-center text-green-600 gap-2 py-2">
-                <CheckCircle className="w-5 h-5" />
-                <span className="font-medium">พร้อมบันทึกรายการรับเงิน</span>
-              </div>
-            ) : method === 'เงินโอน' ? (
-              /* 🔥 ตรงนี้คงของเดิม 100% */
-              <div className="space-y-4 text-center">
-                {/* (โค้ด QR + slip เดิมทั้งหมดของคุณยังอยู่ครบ) */}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center text-gray-500 py-4">
-                <ShoppingBag className="w-12 h-12 mb-2 opacity-30" />
-                <p className="text-sm">กรุณานำเงินสดมาบริจาคที่จุดรับบริจาค</p>
-              </div>
-            )}
-          </div>
-        
-          <div className="md:col-span-2">
-            <div className="flex justify-between items-center mb-1">
-              <label className="block text-sm font-medium text-gray-700">หมายเหตุเพิ่มเติม / คำอวยพร</label>
-              <button type="button" onClick={handleGenerateBlessing}
-                disabled={isGeneratingBlessing || !name}
-                className="text-xs bg-orange-50 text-orange-600 hover:bg-orange-100 px-2 py-1 rounded flex items-center transition disabled:opacity-50 font-medium border border-orange-200">
-                {isGeneratingBlessing ? <Loader className="w-3 h-3 animate-spin mr-1"/> : <Sparkles className="w-3 h-3 mr-1"/>}
-                สร้างคำอวยพร ✨
-              </button>
+    
+                    {/* SUBMIT */}
+                    <button className="md:col-span-2 bg-orange-600 text-white p-3 rounded">
+                        บันทึก
+                    </button>
+    
+                </form>
             </div>
-        
-            <textarea 
-              rows="2"
-              className="w-full p-2 border border-gray-300 rounded outline-none"
-              value={generalNote}
-              onChange={e => setGeneralNote(e.target.value)}
-            />
-          </div>
-        
-          <button 
-            type="submit"
-            disabled={isUploading || isGeneratingBlessing}
-            className={`md:col-span-2 w-full text-white font-bold py-3 px-4 rounded hover:bg-${theme}-700 transition shadow-lg flex justify-center items-center text-lg ${
-              (isUploading || isGeneratingBlessing) ? 'bg-gray-400' : `bg-${theme}-600`
-            }`}
-          >
-            {(isUploading || isGeneratingBlessing)
-              ? 'กำลังประมวลผล...'
-              : <><CheckCircle className="w-6 h-6 mr-2" /> ยืนยันการบริจาค</>}
-          </button>
-        
-        </form>
+        );
+    }
 
         // ==========================================
         // DataTables-style Dashboard
