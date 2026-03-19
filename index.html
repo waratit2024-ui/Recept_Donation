@@ -3558,8 +3558,20 @@ function AdminSettingsPanel({ settings, onSave, onClearData }) {
                 <div className={`font-sans text-gray-800`}>
                     <style>{`
                         @import url('https://fonts.googleapis.com/css2?family=${settings.fontFamily || 'Prompt'}:wght@300;400;500;600;700&display=swap');
+                        
+                        /* ==================================================== */
+                        /* 🌟 ย่อสัดส่วนหน้าจอทั้งหมด (ฟอนต์, กล่อง, ช่องว่าง) ลง 20% */
+                        /* (ค่าเดิมคือ 100% เราปรับเหลือ 80%) */
+                        /* ==================================================== */
+                        html { font-size: 80% !important; }
+                        
+                        /* ป้องกันไม่ให้การพิมพ์รายงาน/ใบเสร็จ ถูกย่อเล็กลงไปด้วย (บังคับ A4 ให้เป๊ะเท่าเดิม) */
+                        @media print { html { font-size: 100% !important; } }
+                        
                         :root { --font-dynamic: '${settings.fontFamily || 'Prompt'}', sans-serif; }
-                        body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, a, div, .font-sans { font-family: var(--font-dynamic) !important; }
+                        body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, a, div, .font-sans { 
+                            font-family: var(--font-dynamic) !important; 
+                        }
                     `}</style>
 
                     {notification && (<NotificationToast msg={notification.msg} type={notification.type} onClose={() => setNotification(null)} />)}
