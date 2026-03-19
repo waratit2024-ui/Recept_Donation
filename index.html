@@ -3200,9 +3200,9 @@ function AdminSettingsPanel({ settings, onSave, onClearData }) {
                     )}
 
                     {showETaxModal && <ETaxModal onClose={() => setShowETaxModal(false)} />}
+                </div>
             );
-        } //
-                    
+        }
 
         // ==========================================
         // ระบบอัปโหลดสลิปผ่านมือถือ (Remote Slip Upload)
@@ -3304,8 +3304,8 @@ function AdminSettingsPanel({ settings, onSave, onClearData }) {
                                 </div>
                                 <p className="text-gray-400 mb-6 font-light">ร่วมสร้างบุญกุศล สะสมบารมี เป็นที่พึ่งทางใจของชาวพุทธ</p>
                                 <div className="flex space-x-4">
-                                    {settings?.contact?.facebook && <a href={settings.contact.facebook} target="_blank" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white transition-all duration-300"><Facebook className="w-5 h-5" /></a>}
-                                    {settings?.contact?.line && <a href={settings.contact.line} target="_blank" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-green-500 hover:text-white transition-all duration-300"><MessageCircle className="w-5 h-5" /></a>}
+                                    {settings?.contact?.facebook && <a href={settings.contact.facebook} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white transition-all duration-300"><Facebook className="w-5 h-5" /></a>}
+                                    {settings?.contact?.line && <a href={settings.contact.line} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-green-500 hover:text-white transition-all duration-300"><MessageCircle className="w-5 h-5" /></a>}
                                 </div>
                             </div>
                             <div>
@@ -3564,77 +3564,22 @@ function AdminSettingsPanel({ settings, onSave, onClearData }) {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('upload_ref')) {
                 return (
-                    <div className={`font-sans text-gray-800`}>
+                    <div className={`font-sans text-gray-800 flex flex-col min-h-screen`}>
                         <style>{`
                             @import url('https://fonts.googleapis.com/css2?family=${settings.fontFamily || 'Prompt'}:wght@300;400;500;600;700&display=swap');
                             :root { --font-dynamic: '${settings.fontFamily || 'Prompt'}', sans-serif; }
                             body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, a, div, .font-sans { font-family: var(--font-dynamic) !important; }
                         `}</style>
                         {/* เรียกแสดงหน้าอัปโหลดสลิปสำหรับมือถือ */}
-                        <RemoteSlipUpload db={db} />
+                        <div className="flex-grow">
+                            <RemoteSlipUpload db={db} />
+                        </div>
                     </div>
                 );
             }
             // ==========================================
 
             return (
-                <div className={`font-sans text-gray-800`}>
-                    <style>{`
-                        @import url('https://fonts.googleapis.com/css2?family=${settings.fontFamily || 'Prompt'}:wght@300;400;500;600;700&display=swap');
-                        
-                        /* ==================================================== */
-                        /* 🌟 ย่อสัดส่วนหน้าจอทั้งหมด (ฟอนต์, กล่อง, ช่องว่าง) ลง 20% */
-                        /* (ค่าเดิมคือ 100% เราปรับเหลือ 80%) */
-                        /* ==================================================== */
-                        html { font-size: 80% !important; }
-                        
-                        /* ป้องกันไม่ให้การพิมพ์รายงาน/ใบเสร็จ ถูกย่อเล็กลงไปด้วย (บังคับ A4 ให้เป๊ะเท่าเดิม) */
-                        @media print { html { font-size: 100% !important; } }
-                        
-                        :root { --font-dynamic: '${settings.fontFamily || 'Prompt'}', sans-serif; }
-                        body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, a, div, .font-sans { 
-                            font-family: var(--font-dynamic) !important; 
-                        }
-                    `}</style>
-
-                    {notification && (<NotificationToast msg={notification.msg} type={notification.type} onClose={() => setNotification(null)} />)}
-                    
-                    {loading ? (
-                        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 text-gray-600">
-                            <Loader className="w-10 h-10 animate-spin mb-4" />
-                            <p>กำลังเชื่อมต่อฐานข้อมูล...</p>
-                        </div>
-                    ) : currentRoute === 'donate-system' ? (
-                        <DonationSystem 
-                            onBack={() => setCurrentRoute('home')} 
-                            donations={donations}
-                            settings={settings}
-                            onAdd={handleAddDonation}
-                            onUpdate={handleUpdateDonation}
-                            onDelete={handleDeleteDonation}
-                            onUpdateSettings={handleUpdateSettings}
-                            onClearData={handleClearAllData}
-                            showNotification={showNotification}
-                            loggedInUser={loggedInUser}
-                            setLoggedInUser={setLoggedInUser}
-                        />
-                    ) : (
-                        <OfficialWebsite 
-                            onNavigate={(route) => setCurrentRoute(route)} 
-                            donations={donations} 
-                            settings={settings}
-                            setLoggedInUser={setLoggedInUser}
-                            showNotification={showNotification}
-                            onUpdateSettings={handleUpdateSettings}
-                        />
-                    )}
-                </div>
-            );
-        }
-
-            // ส่วนโค้ด App เดิมท่อนล่างสุด
-            return (
-            // เพิ่ม flex flex-col min-h-screen เพื่อดันให้ Footer อยู่ล่างสุดเสมอ
                 <div className={`font-sans text-gray-800 flex flex-col min-h-screen`}>
                     <style>{`
                         @import url('https://fonts.googleapis.com/css2?family=${settings.fontFamily || 'Prompt'}:wght@300;400;500;600;700&display=swap');
@@ -3646,7 +3591,6 @@ function AdminSettingsPanel({ settings, onSave, onClearData }) {
 
                     {notification && (<NotificationToast msg={notification.msg} type={notification.type} onClose={() => setNotification(null)} />)}
                     
-                    {/* ส่วนเนื้อหาหลัก จะถูกขยายให้เต็มพื้นที่ (flex-grow) */}
                     <div className="flex-grow">
                         {loading ? (
                             <div className="min-h-[80vh] flex flex-col items-center justify-center bg-gray-50 text-gray-600">
@@ -3679,9 +3623,6 @@ function AdminSettingsPanel({ settings, onSave, onClearData }) {
                         )}
                     </div>
 
-                    );
-        }
-
                     {/* เรียกใช้ Footer ไว้ล่างสุดนอกเงื่อนไข (จะโชว์ทุกหน้า!) */}
                     {!loading && <GlobalFooter settings={settings} />}
                 </div>
@@ -3692,5 +3633,4 @@ function AdminSettingsPanel({ settings, onSave, onClearData }) {
         root.render(<App />);
     </script>
 </body>
-</html>
 </html>
