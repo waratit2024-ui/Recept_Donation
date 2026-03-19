@@ -943,6 +943,7 @@
         function DonationForm({ loggedInUser, userRole, onSave, showNotification, settings }) {
             const [name, setName] = useState('');
             const [method, setMethod] = useState((userRole === 'staff' || userRole === 'admin') ? 'เงินสด' : 'เงินโอน');
+            const [customMethod, setCustomMethod] = useState(''); 
             const [generalNote, setGeneralNote] = useState('');
             const [slipImage, setSlipImage] = useState(null); 
             const [isUploading, setIsUploading] = useState(false);
@@ -950,6 +951,8 @@
             const [showThankYou, setShowThankYou] = useState(false);
             const [selectedItems, setSelectedItems] = useState({});
             const [showETaxModal, setShowETaxModal] = useState(false);
+            const [uploadSession, setUploadSession] = useState(null); // State สำหรับระบบ QR Code
+            
             const theme = settings.themeColor || 'orange';
             const donationTypes = settings.donationTypes || [];
 
@@ -989,6 +992,40 @@
                 return sum;
             }, [selectedItems, donationTypes]);
 
+            // --- ฟังก์ชันสร้าง QR Code ให้ผู้บริจาคแสกน ---
+            const handleGenerateSlipQR = async () => {
+                const sessionId = `req_${Date.now()}`;
+                try {
+                    // 1. สร้างเอกสารเปล่ารอมือถือผู้บริจาคอัปโหลดรูป
+                    await setDoc(doc(db, 'temp_uploads', sessionId), {
+                        status: 'waiting',
+                        createdAt: new Date().toISOString(),
+                        slipImage: null
+                    });
+
+                    // 2. สร้างลิงก์สำหรับสร้าง QR Code
+                    const uploadUrl = `${window.location.origin}${window.location.pathname}?upload_ref=${sessionId}`;
+                    setUploadSession({ id: sessionId, url: uploadUrl });
+
+                    // 3. เปิดหูรอฟัง (Listen) ว่ามีการอัปโหลดรูปเข้ามาหรือยัง
+                    const unsubscribe = onSnapshot(doc(db, 'temp_uploads', sessionId), (docSnap) => {
+                        if (docSnap.exists()) {
+                            const data = docSnap.data();
+                            if (data.status === 'completed' && data.slipImage) {
+                                // ถ้ารูปมาแล้ว!
+                                setSlipImage(data.slipImage); // ดึงรูปลงฟอร์ม
+                                setUploadSession(null);       // ปิด Modal QR
+                                showNotification('รับรูปสลิปจากผู้บริจาคเรียบร้อยแล้ว!', 'success');
+                                unsubscribe();                // เลิกฟัง
+                                deleteDoc(doc(db, 'temp_uploads', sessionId)); // ลบข้อมูลชั่วคราวทิ้ง
+                            }
+                        }
+                    });
+                } catch (error) {
+                    showNotification('สร้าง QR Code ไม่สำเร็จ', 'error');
+                }
+            };
+
             const handleFileChange = async (e) => {
                 const file = e.target.files[0];
                 if (file) {
@@ -1027,6 +1064,11 @@
                 const isRoongTaanChecked = selectedItems['roong_taan']?.checked;
                 if (totalAmount <= 0 && !isRoongTaanChecked) return showNotification('กรุณาระบุยอดเงินบริจาค', 'error');
                 if (isRoongTaanChecked && (!selectedItems['roong_taan'].date || !selectedItems['roong_taan'].note)) return showNotification('กรุณาระบุวันที่และสิ่งของสำหรับโรงทาน', 'error');
+                
+                // ตรวจสอบช่องทางชำระเงินแบบพิมพ์เอง
+                const finalMethod = method === 'อื่นๆ' ? customMethod : method;
+                if (method === 'อื่นๆ' && !customMethod.trim()) return showNotification('กรุณาระบุช่องทางการรับเงินให้ชัดเจน', 'error');
+                
                 if (settings.requireSlip !== false && method === 'เงินโอน' && !slipImage && userRole === 'donor') return showNotification('กรุณาแนบสลิปการโอนเงิน', 'error');
 
                 let purposeParts = [];
@@ -1048,7 +1090,7 @@
                     name, 
                     purpose: purposeParts.join(', '), 
                     amount: totalAmount, 
-                    method, 
+                    method: finalMethod, 
                     generalNote, 
                     status: userRole === 'donor' ? 'pending' : 'approved', 
                     source: userRole === 'donor' ? 'self' : 'staff', 
@@ -1065,6 +1107,7 @@
             const resetForm = () => {
                 setName(''); 
                 setMethod((userRole === 'staff' || userRole === 'admin') ? 'เงินสด' : 'เงินโอน'); 
+                setCustomMethod(''); 
                 setGeneralNote(''); 
                 setSlipImage(null);
                 const resetItems = {};
@@ -1101,7 +1144,38 @@
             }
 
             return (
-                <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-md overflow-hidden no-print">
+                <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-md overflow-hidden no-print relative">
+                    
+                    {/* --- Modal แสดง QR Code ให้ผู้บริจาคสแกน --- */}
+                    {uploadSession && (
+                        <div className="absolute inset-0 bg-white/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                            <div className="bg-white p-8 rounded-2xl shadow-2xl border border-gray-100 text-center max-w-sm w-full animate-scale-up">
+                                <Smartphone className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+                                <h3 className="text-xl font-bold text-gray-800 mb-2">ให้ผู้บริจาคสแกน QR นี้</h3>
+                                <p className="text-sm text-gray-500 mb-6">สแกนด้วยกล้องมือถือ เพื่อส่งรูปสลิป<br/>มาที่เครื่องนี้โดยอัตโนมัติ</p>
+                                
+                                <div className="bg-white p-4 rounded-xl shadow-sm border-2 border-dashed border-gray-300 inline-block mb-6 relative">
+                                    <img 
+                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(uploadSession.url)}`} 
+                                        alt="Upload QR" 
+                                        className="w-48 h-48 mx-auto"
+                                    />
+                                    <div className="absolute inset-0 bg-white/20 flex items-center justify-center pointer-events-none">
+                                        <div className="w-full h-1 bg-blue-500/50 absolute top-0 animate-pulse"></div>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex items-center justify-center text-blue-600 font-bold animate-pulse mb-6">
+                                    <Loader className="w-5 h-5 mr-2 animate-spin" /> กำลังรอรับรูปสลิป...
+                                </div>
+
+                                <button onClick={() => setUploadSession(null)} className="text-gray-500 hover:text-gray-800 font-medium underline">
+                                    ยกเลิก
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     <div className={`bg-${theme}-100 px-6 py-4 border-b border-${theme}-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2`}>
                         <h2 className={`text-xl font-semibold text-${theme}-800 flex items-center`}><PlusCircle className="w-6 h-6 mr-2 shrink-0" /> {userRole === 'donor' ? 'ฟอร์มแจ้งความประสงค์บริจาค' : 'บันทึกรับเงินบริจาค'}</h2>
                         <span className="text-xs sm:text-sm text-gray-500 bg-white px-3 py-1 rounded-full border">{userRole === 'donor' ? 'รอตรวจสอบ' : 'อนุมัติอัตโนมัติ'}</span>
@@ -1120,7 +1194,6 @@
                             <label className="block text-sm font-bold text-gray-700 bg-gray-100 p-2 rounded mb-3">1. ข้อมูลผู้บริจาค</label>
                             <div className="px-2">
                                 <label className="block text-xs text-gray-500 mb-1 uppercase font-bold tracking-wider">ชื่อ - สกุล ผู้บริจาค <span className="text-red-500">*</span></label>
-                                {/* เปลี่ยนจาก input เป็น textarea เพื่อให้พิมพ์ชื่อยาวๆ หรือรายชื่อครอบครัวได้สบายขึ้น */}
                                 <textarea 
                                     required 
                                     rows="2"
@@ -1172,45 +1245,78 @@
                                     <span className={`text-3xl font-black text-${theme}-600`}>{totalAmount.toLocaleString()} บาท</span>
                                 </div>
 
+                                {/* กล่องเลือกช่องทางชำระเงิน */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">ช่องทางการรับเงิน</label>
                                     <select className="w-full p-3 border border-gray-300 rounded-lg outline-none bg-white font-medium" value={method} onChange={e => setMethod(e.target.value)}>
                                         <option value="เงินสด">💵 รับเงินสด ณ จุดบริการ</option>
-                                        <option value="เงินโอน">🏦 โอนเงินเข้าบัญชีวัด</option>
-                                        <option value="อื่นๆ">❓ อื่นๆ</option>
+                                        <option value="เงินโอน">🏦 โอนเงินเข้าบัญชีวัด (ต้องมีสลิป)</option>
+                                        <option value="อื่นๆ">❓ อื่นๆ (พิมพ์ระบุเอง)</option>
                                     </select>
+                                    
+                                    {/* จะแสดงกล่องพิมพ์ข้อความก็ต่อเมื่อเลือก "อื่นๆ" เท่านั้น */}
+                                    {method === 'อื่นๆ' && (
+                                        <div className="mt-3 animate-fade-in">
+                                            <input 
+                                                type="text" 
+                                                className={`w-full p-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-${theme}-500 bg-blue-50 text-blue-900 placeholder-blue-300`}
+                                                value={customMethod}
+                                                onChange={e => setCustomMethod(e.target.value)}
+                                                placeholder="ระบุชื่อช่องทาง เช่น เช็คธนาคาร, พร้อมเพย์"
+                                                required
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* ส่วนของหลักฐานการโอน */}
                                 <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
-                                    {(userRole === 'staff' || userRole === 'admin') ? (
-                                        <div className="flex items-center justify-center text-green-600 gap-2 py-2">
-                                            <CheckCircle className="w-6 h-6" />
-                                            <span className="font-bold">สถานะ: อนุมัติทันทีและออกใบเสร็จ</span>
-                                        </div>
-                                    ) : method === 'เงินโอน' ? (
-                                        <div className="space-y-4 text-center">
-                                            <div className="animate-fade-in">
-                                                <p className="text-sm font-bold text-gray-700 mb-2">สแกน QR Code เพื่อโอนเงิน</p>
-                                                <div className="bg-white p-3 rounded-lg shadow-sm border inline-block">
-                                                    <img src={settings.qrCodeUrl} alt="QR Code" className="w-32 h-32 object-contain" />
+                                    {method === 'เงินโอน' ? (
+                                        <div className="space-y-4">
+                                            
+                                            {/* ปุ่มสร้าง QR ให้ผู้บริจาคแสกน (เห็นเฉพาะเจ้าหน้าที่) */}
+                                            {(userRole === 'staff' || userRole === 'admin') && !slipImage && (
+                                                <div className="bg-blue-50 p-4 rounded-xl border border-blue-200 text-center animate-fade-in">
+                                                    <QrCode className="w-10 h-10 text-blue-500 mx-auto mb-2" />
+                                                    <p className="text-sm font-bold text-blue-800 mb-1">รับสลิปผ่านมือถือผู้บริจาค</p>
+                                                    <p className="text-xs text-blue-600 mb-3">ให้ผู้บริจาคสแกนเพื่อส่งรูปเข้าจอคอมอัตโนมัติ</p>
+                                                    <button type="button" onClick={handleGenerateSlipQR} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md flex items-center justify-center transition">
+                                                        <Smartphone className="w-4 h-4 mr-2" />
+                                                        สร้าง QR Code รับสลิป
+                                                    </button>
                                                 </div>
-                                                <p className="text-xs text-gray-500 mt-1">{settings.bankInfo?.bankName} | {settings.bankInfo?.accountName}</p>
-                                                <p className={`text-lg font-mono font-bold text-${theme}-700 mt-1 select-all`}>{settings.bankInfo?.accountNumber}</p>
-                                            </div>
-                                            <div className="border-t border-gray-200 pt-4">
-                                                <p className="text-sm font-bold text-gray-700 mb-2">{settings.requireSlip !== false ? 'แนบหลักฐานการโอน *' : 'แนบหลักฐานการโอน (ถ้ามี)'}</p>
-                                                <label className="cursor-pointer block border-2 border-dashed border-gray-300 rounded-lg p-4 hover:bg-gray-100 transition">
+                                            )}
+
+                                            {/* ช่องทางอัปโหลดสลิปแบบปกติ (สำหรับผู้บริจาค หรือเจ้าหน้าที่แนบเอง) */}
+                                            <div className="border-t border-gray-200 pt-4 mt-2">
+                                                <p className="text-sm font-bold text-gray-700 mb-2">
+                                                    {userRole === 'donor' ? 'สแกน QR ด้านล่างแล้วแนบสลิปที่นี่' : 'หรือแนบหลักฐานการโอนด้วยตนเอง'}
+                                                </p>
+                                                
+                                                {/* โชว์ QR บัญชีวัด ถ้าเป็นฝั่งผู้บริจาคทำเอง */}
+                                                {userRole === 'donor' && (
+                                                    <div className="bg-white p-3 rounded-lg shadow-sm border inline-block mb-3 text-center">
+                                                        <img src={settings.qrCodeUrl} alt="QR Code" className="w-32 h-32 object-contain mx-auto" />
+                                                        <p className="text-xs text-gray-500 mt-1">{settings.bankInfo?.bankName}</p>
+                                                        <p className={`text-lg font-mono font-bold text-${theme}-700 mt-1`}>{settings.bankInfo?.accountNumber}</p>
+                                                    </div>
+                                                )}
+
+                                                <label className="cursor-pointer block border-2 border-dashed border-gray-300 rounded-lg p-4 hover:bg-gray-100 transition text-center">
                                                     <div className="flex flex-col items-center justify-center">
                                                         {isUploading ? <Loader className="w-6 h-6 animate-spin text-gray-400" /> : <UploadCloud className="w-6 h-6 text-gray-400 mb-1" />}
-                                                        <span className="text-sm text-gray-600">{slipImage ? 'เปลี่ยนรูปสลิป' : 'คลิกเพื่อเลือกรูปสลิป'}</span>
+                                                        <span className="text-sm text-gray-600 font-medium">
+                                                            {slipImage ? '✓ มีรูปสลิปแล้ว (คลิกเพื่อเปลี่ยน)' : 'คลิกเพื่อเลือกไฟล์รูปในเครื่อง'}
+                                                        </span>
                                                     </div>
                                                     <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                                                 </label>
+                                                
+                                                {/* พรีวิวรูปสลิป */}
                                                 {slipImage && (
-                                                    <div className="mt-3 relative inline-block">
-                                                        <img src={slipImage} alt="Preview" className="h-24 object-contain rounded border bg-white" />
-                                                        <button type="button" onClick={() => setSlipImage(null)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow hover:bg-red-600"><X className="w-3 h-3" /></button>
+                                                    <div className="mt-4 relative inline-block p-2 bg-white border rounded-xl shadow-sm">
+                                                        <img src={slipImage} alt="Preview" className="h-32 object-contain rounded" />
+                                                        <button type="button" onClick={() => setSlipImage(null)} className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-1.5 shadow-lg hover:bg-red-600 transition"><X className="w-4 h-4" /></button>
                                                     </div>
                                                 )}
                                             </div>
@@ -1218,7 +1324,9 @@
                                     ) : (
                                         <div className="flex flex-col items-center justify-center text-gray-400 py-4">
                                             <ShoppingBag className="w-10 h-10 mb-2 opacity-50" />
-                                            <p className="text-sm">รอรับเงินสดที่จุดบริการ</p>
+                                            <p className="text-sm">
+                                                {method === 'เงินสด' && (userRole === 'staff' || userRole === 'admin') ? 'สถานะ: อนุมัติทันทีและออกใบเสร็จ' : 'รับเงินผ่านช่องทางที่ระบุ'}
+                                            </p>
                                         </div>
                                     )}
                                 </div>
@@ -1250,7 +1358,6 @@
                 </div>
             );
         }
-
         // ==========================================
         // DataTables-style Dashboard
         // ==========================================
@@ -3113,6 +3220,85 @@ function AdminSettingsPanel({ settings, onSave, onClearData }) {
         }
 
         // ==========================================
+        // ระบบอัปโหลดสลิปผ่านมือถือ (Remote Slip Upload)
+        // ==========================================
+        function RemoteSlipUpload({ db }) {
+            const [status, setStatus] = useState('waiting'); // waiting, uploading, success, error
+            const [preview, setPreview] = useState(null);
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('upload_ref');
+        
+            if (!sessionId) return <div className="p-8 text-center text-red-500 font-bold">❌ ลิงก์ไม่ถูกต้อง หรือหมดอายุแล้ว</div>;
+        
+            const handleMobileUpload = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                setStatus('uploading');
+                try {
+                    // 1. ย่อรูป
+                    const resizedImage = await resizeImage(file);
+                    setPreview(resizedImage);
+                    
+                    // 2. ส่งรูปเข้า Firebase เพื่อให้หน้าจอเจ้าหน้าที่เด้งรับ
+                    await updateDoc(doc(db, 'temp_uploads', sessionId), {
+                        slipImage: resizedImage,
+                        status: 'completed',
+                        updatedAt: new Date().toISOString()
+                    });
+                    
+                    setStatus('success');
+                } catch (error) {
+                    console.error(error);
+                    setStatus('error');
+                }
+            };
+        
+            return (
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 font-prompt">
+                    <div className="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center">
+                        <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <UploadCloud className="w-8 h-8 text-orange-600" />
+                        </div>
+                        <h2 className="text-xl font-bold text-gray-800 mb-2">อัปโหลดสลิปโอนเงิน</h2>
+                        <p className="text-sm text-gray-500 mb-6">กรุณาแนบภาพสลิป เพื่อส่งให้เจ้าหน้าที่</p>
+        
+                        {status === 'waiting' && (
+                            <label className="block w-full bg-orange-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition cursor-pointer">
+                                เลือกรูปสลิปจากมือถือ
+                                <input type="file" accept="image/*" className="hidden" onChange={handleMobileUpload} />
+                            </label>
+                        )}
+        
+                        {status === 'uploading' && (
+                            <div className="py-8 flex flex-col items-center">
+                                <Loader className="w-10 h-10 text-orange-500 animate-spin mb-4" />
+                                <p className="text-orange-600 font-bold animate-pulse">กำลังส่งรูปให้เจ้าหน้าที่...</p>
+                            </div>
+                        )}
+        
+                        {status === 'success' && (
+                            <div className="py-4 animate-scale-up">
+                                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                                <h3 className="text-xl font-bold text-green-600 mb-2">ส่งสลิปสำเร็จ!</h3>
+                                <p className="text-sm text-gray-500 mb-4">ระบบบันทึกรูปภาพเรียบร้อยแล้ว<br/>คุณสามารถปิดหน้านี้ได้เลยครับ</p>
+                                {preview && <img src={preview} alt="Slip" className="w-32 mx-auto rounded-lg border shadow-sm" />}
+                            </div>
+                        )}
+        
+                        {status === 'error' && (
+                            <div className="py-4">
+                                <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                                <h3 className="text-lg font-bold text-red-600 mb-2">เกิดข้อผิดพลาด</h3>
+                                <p className="text-sm text-gray-500 mb-4">ไฟล์อาจใหญ่เกินไป หรือการเชื่อมต่อมีปัญหา</p>
+                                <button onClick={() => setStatus('waiting')} className="bg-gray-200 px-6 py-2 rounded-lg font-bold">ลองใหม่อีกครั้ง</button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+        // ==========================================
         // 7. APP & ROOT
         // ==========================================
         function App() {
@@ -3327,6 +3513,25 @@ function AdminSettingsPanel({ settings, onSave, onClearData }) {
                 }
             };
 
+            // ==========================================
+            // ส่วนที่ 2: ดักจับ URL ถ้าเป็นการแสกน QR Code ให้ออกไปหน้าอัปโหลดมือถือ
+            // ==========================================
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('upload_ref')) {
+                return (
+                    <div className={`font-sans text-gray-800`}>
+                        <style>{`
+                            @import url('https://fonts.googleapis.com/css2?family=${settings.fontFamily || 'Prompt'}:wght@300;400;500;600;700&display=swap');
+                            :root { --font-dynamic: '${settings.fontFamily || 'Prompt'}', sans-serif; }
+                            body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, a, div, .font-sans { font-family: var(--font-dynamic) !important; }
+                        `}</style>
+                        {/* เรียกแสดงหน้าอัปโหลดสลิปสำหรับมือถือ */}
+                        <RemoteSlipUpload db={db} />
+                    </div>
+                );
+            }
+            // ==========================================
+
             return (
                 <div className={`font-sans text-gray-800`}>
                     <style>{`
@@ -3374,4 +3579,5 @@ function AdminSettingsPanel({ settings, onSave, onClearData }) {
         root.render(<App />);
     </script>
 </body>
+</html>
 </html>
