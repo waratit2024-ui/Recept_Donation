@@ -951,7 +951,7 @@
             const [showThankYou, setShowThankYou] = useState(false);
             const [selectedItems, setSelectedItems] = useState({});
             const [showETaxModal, setShowETaxModal] = useState(false);
-            const [uploadSession, setUploadSession] = useState(null); // State สำหรับระบบ QR Code
+            const [uploadSession, setUploadSession] = useState(null); 
             
             const theme = settings.themeColor || 'orange';
             const donationTypes = settings.donationTypes || [];
@@ -992,32 +992,27 @@
                 return sum;
             }, [selectedItems, donationTypes]);
 
-            // --- ฟังก์ชันสร้าง QR Code ให้ผู้บริจาคแสกน ---
             const handleGenerateSlipQR = async () => {
                 const sessionId = `req_${Date.now()}`;
                 try {
-                    // 1. สร้างเอกสารเปล่ารอมือถือผู้บริจาคอัปโหลดรูป
                     await setDoc(doc(db, 'temp_uploads', sessionId), {
                         status: 'waiting',
                         createdAt: new Date().toISOString(),
                         slipImage: null
                     });
 
-                    // 2. สร้างลิงก์สำหรับสร้าง QR Code
                     const uploadUrl = `${window.location.origin}${window.location.pathname}?upload_ref=${sessionId}`;
                     setUploadSession({ id: sessionId, url: uploadUrl });
 
-                    // 3. เปิดหูรอฟัง (Listen) ว่ามีการอัปโหลดรูปเข้ามาหรือยัง
                     const unsubscribe = onSnapshot(doc(db, 'temp_uploads', sessionId), (docSnap) => {
                         if (docSnap.exists()) {
                             const data = docSnap.data();
                             if (data.status === 'completed' && data.slipImage) {
-                                // ถ้ารูปมาแล้ว!
-                                setSlipImage(data.slipImage); // ดึงรูปลงฟอร์ม
-                                setUploadSession(null);       // ปิด Modal QR
+                                setSlipImage(data.slipImage); 
+                                setUploadSession(null);       
                                 showNotification('รับรูปสลิปจากผู้บริจาคเรียบร้อยแล้ว!', 'success');
-                                unsubscribe();                // เลิกฟัง
-                                deleteDoc(doc(db, 'temp_uploads', sessionId)); // ลบข้อมูลชั่วคราวทิ้ง
+                                unsubscribe();                
+                                deleteDoc(doc(db, 'temp_uploads', sessionId)); 
                             }
                         }
                     });
@@ -1065,7 +1060,6 @@
                 if (totalAmount <= 0 && !isRoongTaanChecked) return showNotification('กรุณาระบุยอดเงินบริจาค', 'error');
                 if (isRoongTaanChecked && (!selectedItems['roong_taan'].date || !selectedItems['roong_taan'].note)) return showNotification('กรุณาระบุวันที่และสิ่งของสำหรับโรงทาน', 'error');
                 
-                // ตรวจสอบช่องทางชำระเงินแบบพิมพ์เอง
                 const finalMethod = method === 'อื่นๆ' ? customMethod : method;
                 if (method === 'อื่นๆ' && !customMethod.trim()) return showNotification('กรุณาระบุช่องทางการรับเงินให้ชัดเจน', 'error');
                 
@@ -1144,7 +1138,8 @@
             }
 
             return (
-                <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-md overflow-hidden no-print relative">
+                // เปลี่ยนเป็น max-w-7xl เพื่อให้กล่องกว้างขึ้น รองรับ 3 คอลัมน์ได้สวยงาม
+                <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-md overflow-hidden no-print relative">
                     
                     {/* --- Modal แสดง QR Code ให้ผู้บริจาคสแกน --- */}
                     {uploadSession && (
@@ -1169,7 +1164,7 @@
                                     <Loader className="w-5 h-5 mr-2 animate-spin" /> กำลังรอรับรูปสลิป...
                                 </div>
 
-                                <button onClick={() => setUploadSession(null)} className="text-gray-500 hover:text-gray-800 font-medium underline">
+                                <button type="button" onClick={() => setUploadSession(null)} className="text-gray-500 hover:text-gray-800 font-medium underline">
                                     ยกเลิก
                                 </button>
                             </div>
@@ -1184,34 +1179,55 @@
                     <form onSubmit={handleSubmit} className="p-6">
                         
                         {/* ข้อมูล Header ฟอร์ม */}
-                        <div className="grid grid-cols-2 gap-4 text-sm text-gray-500 bg-gray-50 p-3 rounded-lg border mb-6">
+                        <div className="grid grid-cols-2 gap-4 text-sm text-gray-500 bg-gray-50 p-3 rounded-lg border mb-6 max-w-2xl">
                             <div><span className="font-semibold">ID:</span> อัตโนมัติ</div>
                             <div><span className="font-semibold">ผู้บันทึก:</span> {loggedInUser ? loggedInUser.name : 'ผู้บริจาค (ออนไลน์)'}</div>
                         </div>
 
-                        {/* --- ส่วนที่ 1: ข้อมูลผู้บริจาค (เต็มบรรทัด ทรงกว้าง) --- */}
-                        <div className="mb-8">
-                            <label className="block text-sm font-bold text-gray-700 bg-gray-100 p-2 rounded mb-3">1. ข้อมูลผู้บริจาค</label>
-                            <div className="px-2">
-                                <label className="block text-xs text-gray-500 mb-1 uppercase font-bold tracking-wider">ชื่อ - สกุล ผู้บริจาค <span className="text-red-500">*</span></label>
-                                <textarea 
-                                    required 
-                                    rows="5"
-                                    className={`w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-${theme}-500 outline-none text-lg`} 
-                                    value={name} 
-                                    onChange={e => setName(e.target.value)} 
-                                    placeholder="ชื่อ-สกุล (มากกว่า 1 ท่านได้)" 
-                                ></textarea>
-                            </div>
-                        </div>
-
-                        {/* --- ส่วนที่ 2: Grid 2 คอลัมน์ (เลือกรายการ & การชำระเงิน) --- */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* ========================================================= */}
+                        {/* --- โครงสร้าง 3 คอลัมน์ (Desktop: 3, Tablet: 2, Mobile: 1) --- */}
+                        {/* ========================================================= */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
                             
-                            {/* คอลัมน์ซ้าย: ประเภทการบริจาค */}
-                            <div className="space-y-3">
+                            {/* --- คอลัมน์ 1: ข้อมูลผู้บริจาค และ หมายเหตุ --- */}
+                            <div className="space-y-6">
+                                <label className="block text-sm font-bold text-gray-700 bg-gray-100 p-2 rounded">1. ข้อมูลผู้บริจาค</label>
+                                
+                                <div>
+                                    <label className="block text-xs text-gray-500 mb-1 uppercase font-bold tracking-wider">ชื่อ - สกุล ผู้บริจาค <span className="text-red-500">*</span></label>
+                                    <textarea 
+                                        required 
+                                        rows="2"
+                                        className={`w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-${theme}-500 outline-none text-lg`} 
+                                        value={name} 
+                                        onChange={e => setName(e.target.value)} 
+                                        placeholder="เช่น ครอบครัวใจดี, นาย ก และ นาง ข (สามารถพิมพ์หลายชื่อได้)" 
+                                    ></textarea>
+                                </div>
+
+                                {/* ย้ายหมายเหตุมาไว้คอลัมน์นี้ เพื่อให้ความสูงบาลานซ์กับคอลัมน์อื่น */}
+                                <div>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <label className="block text-sm font-medium text-gray-700">หมายเหตุเพิ่มเติม / คำอวยพร</label>
+                                        <button type="button" onClick={handleGenerateBlessing} disabled={isGeneratingBlessing || !name} className={`text-xs bg-${theme}-50 text-${theme}-600 hover:bg-${theme}-100 px-2 py-1.5 rounded flex items-center transition disabled:opacity-50 font-medium border border-${theme}-200 shadow-sm`}>
+                                            {isGeneratingBlessing ? <Loader className="w-3 h-3 animate-spin mr-1"/> : <Sparkles className="w-3 h-3 mr-1"/>}
+                                            ร่างด้วย AI ✨
+                                        </button>
+                                    </div>
+                                    <textarea 
+                                        rows="4" 
+                                        className={`w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-${theme}-500 text-sm`} 
+                                        value={generalNote} 
+                                        onChange={e => setGeneralNote(e.target.value)} 
+                                        placeholder="ข้อความเพิ่มเติม..."
+                                    ></textarea>
+                                </div>
+                            </div>
+
+                            {/* --- คอลัมน์ 2: ประเภทการบริจาค --- */}
+                            <div className="space-y-4">
                                 <label className="block text-sm font-bold text-gray-700 bg-gray-100 p-2 rounded">2. เลือกประเภทการบริจาค</label>
-                                <div className="space-y-3 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
+                                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                                     {donationTypes.filter(t => t.active).map(type => {
                                         const itemState = selectedItems[type.id] || { checked: false, quantity: 1, amount: '' };
                                         const isChecked = itemState.checked;
@@ -1236,9 +1252,9 @@
                                 </div>
                             </div>
 
-                            {/* คอลัมน์ขวา: การชำระเงิน & หมายเหตุ */}
-                            <div className="space-y-5">
-                                <label className="block text-sm font-bold text-gray-700 bg-gray-100 p-2 rounded">3. ช่องทางการชำระเงิน</label>
+                            {/* --- คอลัมน์ 3: การชำระเงิน (ขยายเต็มแถวถ้าเป็นจอแท็บเล็ต) --- */}
+                            <div className="space-y-5 md:col-span-2 lg:col-span-1">
+                                <label className="block text-sm font-bold text-gray-700 bg-gray-100 p-2 rounded">3. สรุปยอด และ ชำระเงิน</label>
 
                                 <div className={`bg-${theme}-50 p-4 rounded-xl flex justify-between items-center border border-${theme}-200 shadow-inner`}>
                                     <span className="text-gray-700 font-bold">ยอดรวมทั้งสิ้น</span>
@@ -1250,11 +1266,10 @@
                                     <label className="block text-sm font-medium text-gray-700 mb-1">ช่องทางการรับเงิน</label>
                                     <select className="w-full p-3 border border-gray-300 rounded-lg outline-none bg-white font-medium" value={method} onChange={e => setMethod(e.target.value)}>
                                         <option value="เงินสด">💵 รับเงินสด ณ จุดบริการ</option>
-                                        <option value="เงินโอน">🏦 โอนเงินเข้าบัญชีวัด </option>
-                                        <option value="อื่นๆ">❓ อื่นๆ </option>
+                                        <option value="เงินโอน">🏦 โอนเงินเข้าบัญชีวัด (ต้องมีสลิป)</option>
+                                        <option value="อื่นๆ">❓ อื่นๆ (พิมพ์ระบุเอง)</option>
                                     </select>
                                     
-                                    {/* จะแสดงกล่องพิมพ์ข้อความก็ต่อเมื่อเลือก "อื่นๆ" เท่านั้น */}
                                     {method === 'อื่นๆ' && (
                                         <div className="mt-3 animate-fade-in">
                                             <input 
@@ -1287,13 +1302,12 @@
                                                 </div>
                                             )}
 
-                                            {/* ช่องทางอัปโหลดสลิปแบบปกติ (สำหรับผู้บริจาค หรือเจ้าหน้าที่แนบเอง) */}
+                                            {/* ช่องทางอัปโหลดสลิปแบบปกติ */}
                                             <div className="border-t border-gray-200 pt-4 mt-2">
                                                 <p className="text-sm font-bold text-gray-700 mb-2">
                                                     {userRole === 'donor' ? 'สแกน QR ด้านล่างแล้วแนบสลิปที่นี่' : 'หรือแนบหลักฐานการโอนด้วยตนเอง'}
                                                 </p>
                                                 
-                                                {/* โชว์ QR บัญชีวัด ถ้าเป็นฝั่งผู้บริจาคทำเอง */}
                                                 {userRole === 'donor' && (
                                                     <div className="bg-white p-3 rounded-lg shadow-sm border inline-block mb-3 text-center">
                                                         <img src={settings.qrCodeUrl} alt="QR Code" className="w-32 h-32 object-contain mx-auto" />
@@ -1306,7 +1320,7 @@
                                                     <div className="flex flex-col items-center justify-center">
                                                         {isUploading ? <Loader className="w-6 h-6 animate-spin text-gray-400" /> : <UploadCloud className="w-6 h-6 text-gray-400 mb-1" />}
                                                         <span className="text-sm text-gray-600 font-medium">
-                                                            {slipImage ? '✓ มีรูปสลิปแล้ว (คลิกเพื่อเปลี่ยน)' : 'คลิกเพื่อเลือกไฟล์รูปในเครื่อง'}
+                                                            {slipImage ? '✓ มีรูปสลิปแล้ว (คลิก)' : 'คลิกเพื่อเลือกไฟล์รูป'}
                                                         </span>
                                                     </div>
                                                     <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
@@ -1314,8 +1328,8 @@
                                                 
                                                 {/* พรีวิวรูปสลิป */}
                                                 {slipImage && (
-                                                    <div className="mt-4 relative inline-block p-2 bg-white border rounded-xl shadow-sm">
-                                                        <img src={slipImage} alt="Preview" className="h-32 object-contain rounded" />
+                                                    <div className="mt-4 relative inline-block p-2 bg-white border rounded-xl shadow-sm w-full text-center">
+                                                        <img src={slipImage} alt="Preview" className="h-32 object-contain rounded mx-auto" />
                                                         <button type="button" onClick={() => setSlipImage(null)} className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-1.5 shadow-lg hover:bg-red-600 transition"><X className="w-4 h-4" /></button>
                                                     </div>
                                                 )}
@@ -1330,21 +1344,12 @@
                                         </div>
                                     )}
                                 </div>
-
-                                <div>
-                                    <div className="flex justify-between items-center mb-1">
-                                        <label className="block text-sm font-medium text-gray-700">หมายเหตุเพิ่มเติม / คำอวยพร</label>
-                                        <button type="button" onClick={handleGenerateBlessing} disabled={isGeneratingBlessing || !name} className={`text-xs bg-${theme}-50 text-${theme}-600 hover:bg-${theme}-100 px-2 py-1.5 rounded flex items-center transition disabled:opacity-50 font-medium border border-${theme}-200 shadow-sm`}>
-                                            {isGeneratingBlessing ? <Loader className="w-3 h-3 animate-spin mr-1"/> : <Sparkles className="w-3 h-3 mr-1"/>}
-                                            ร่างด้วย AI ✨
-                                        </button>
-                                    </div>
-                                    <textarea rows="3" className="w-full p-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-${theme}-500 text-sm" value={generalNote} onChange={e => setGeneralNote(e.target.value)} placeholder="(ถ้ามี...)"></textarea>
-                                </div>
-
                             </div>
-                        </div>
 
+                        </div>
+                        {/* ========================================================= */}
+
+                        {/* ปุ่มยืนยัน (กว้างเต็มแถว ด้านล่างสุด) */}
                         <div className="mt-8 pt-6 border-t border-gray-200">
                             <button type="submit" disabled={isUploading || isGeneratingBlessing} className={`w-full text-white font-bold py-4 px-4 rounded-xl hover:bg-${theme}-700 transition shadow-lg flex justify-center items-center text-xl ${(isUploading || isGeneratingBlessing) ? 'bg-gray-400 cursor-not-allowed' : `bg-${theme}-600`}`}>
                                 {(isUploading || isGeneratingBlessing) ? (
