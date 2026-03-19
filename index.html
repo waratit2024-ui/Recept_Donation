@@ -157,7 +157,7 @@
             UploadCloud, Image as ImageIcon, Loader, Info, Settings, Trash2, AlertTriangle, 
             Plus, LogIn, Facebook, MessageCircle, Palette, Bell, FileCheck, Type, Newspaper, Edit, Layout,
             Search, SlidersHorizontal, ExternalLink, ScrollText, Users, UserCog, Mail, ChevronLeft, Sparkles,
-            ChevronDown, Smartphone
+            ChevronDown, Smartphone, Clock
         } from 'lucide-react';
         import { initializeApp } from "firebase/app";
         import { 
@@ -952,6 +952,13 @@
             const [selectedItems, setSelectedItems] = useState({});
             const [showETaxModal, setShowETaxModal] = useState(false);
             const [uploadSession, setUploadSession] = useState(null); 
+
+            // ⏰ State สำหรับนาฬิกาเรียลไทม์
+            const [currentTime, setCurrentTime] = useState(new Date());
+            useEffect(() => {
+                const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+                return () => clearInterval(timer);
+            }, []);
             
             const theme = settings.themeColor || 'orange';
             const donationTypes = settings.donationTypes || [];
@@ -1179,9 +1186,19 @@
                     <form onSubmit={handleSubmit} className="p-6">
                         
                         {/* ข้อมูล Header ฟอร์ม */}
-                        <div className="grid grid-cols-2 gap-4 text-sm text-gray-500 bg-gray-50 p-3 rounded-lg border mb-6 max-w-2xl">
-                            <div><span className="font-semibold">ID:</span> อัตโนมัติ</div>
-                            <div><span className="font-semibold">ผู้บันทึก:</span> {loggedInUser ? loggedInUser.name : 'ผู้บริจาค (ออนไลน์)'}</div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 bg-gray-50/80 p-4 rounded-xl border border-gray-200 mb-6 items-center shadow-sm">
+                            <div className="flex items-center">
+                                <span className="font-bold text-gray-700 mr-2 bg-white px-2 py-1 rounded shadow-sm border">ID:</span> อัตโนมัติ
+                            </div>
+                            <div className="flex items-center">
+                                <span className="font-bold text-gray-700 mr-2 bg-white px-2 py-1 rounded shadow-sm border">ผู้บันทึก:</span> {loggedInUser ? loggedInUser.name : 'ผู้บริจาค (ออนไลน์)'}
+                            </div>
+                            <div className="flex items-center md:justify-end text-orange-700 font-bold bg-orange-100 px-4 py-2 rounded-lg w-fit md:ml-auto border border-orange-200">
+                                <Clock className="w-4 h-4 mr-2" />
+                                {currentTime.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' })} 
+                                <span className="mx-2 text-orange-300">|</span> 
+                                {currentTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} น.
+                            </div>
                         </div>
 
                         {/* ========================================================= */}
