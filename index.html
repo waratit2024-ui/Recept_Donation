@@ -39,6 +39,28 @@
           src: url('https://my-fonts-d25fb.web.app/fonts/LayijiMahaniyomV1_61ot.woff2') format('woff2');
           font-display: swap;
         }
+
+        /* --- นำเข้าฟอนต์ Chula --- */
+        @font-face {
+          font-family: 'Chula' !important;
+          src: url('https://my-fonts-d25fb.web.app/fonts/chulabhornlikittext-light.woff2') format('woff2');
+          font-weight: 300;
+          font-display: swap;
+        }
+
+        @font-face {
+          font-family: 'Chula' !important;
+          src: url('https://my-fonts-d25fb.web.app/fonts/chulabhornlikittext-regular.woff2') format('woff2');
+          font-weight: 400;
+          font-display: swap;
+        }
+
+        @font-face {
+          font-family: 'Chula' !important;
+          src: url('https://my-fonts-d25fb.web.app/fonts/chulabhornlikittext-bold.woff2') format('woff2');
+          font-weight: 700;
+          font-display: swap;
+        }
         
         /* Base styles */
         body {
@@ -101,35 +123,35 @@
             }
             .print-table thead { display: table-header-group !important; }
             
-            /* หัวตาราง (เส้นทึบบางลงเหลือ 3/4) */
+            /* หัวตาราง */
             .print-table thead th { 
-                border-top: 1.5px solid #000 !important; /* ลดจาก 2px เหลือ 1.5px */
-                border-bottom: 0.75px solid #000 !important; /* ลดจาก 1px เหลือ 0.75px */
+                border-top: 1.5px solid #000 !important; 
+                border-bottom: 0.75px solid #000 !important; 
                 border-left: none !important;
                 border-right: none !important;
-                padding: 7px 6px !important; /* ลดระยะห่างลง 30% */
-                font-size: 11px !important; /* ลดขนาดฟอนต์ลง 30% (จาก 16px เหลือ 11px) */
+                padding: 7px 6px !important; 
+                font-size: 11px !important; 
                 font-weight: bold !important; 
                 text-align: center; 
                 color: #000 !important;
                 background-color: transparent !important;
             }
             
-            /* เนื้อหาตาราง (เส้นประบางลงเหลือ 3/4) */
+            /* เนื้อหาตาราง */
             .print-table tbody td { 
                 border-top: none !important;
-                border-bottom: 0.75px dashed #666 !important; /* ลดจาก 1px เหลือ 0.75px */
+                border-bottom: 0.75px dashed #666 !important; 
                 border-left: none !important;
                 border-right: none !important;
                 padding: 7px 6px !important; 
-                font-size: 11px !important; /* ลดขนาดฟอนต์ลง 30% */
+                font-size: 11px !important; 
                 color: #000 !important;
             }
 
-            /* บรรทัดรวมยอด (เส้นทึบ/เส้นคู่บางลงเหลือ 3/4) */
+            /* บรรทัดรวมยอด */
             .print-table tbody tr.total-row td {
-                border-top: 0.75px solid #000 !important; /* ลดจาก 1px เหลือ 0.75px */
-                border-bottom: 2.25px double #000 !important; /* ลดจาก 3px เหลือ 2.25px */
+                border-top: 0.75px solid #000 !important; 
+                border-bottom: 2.25px double #000 !important; 
                 font-weight: bold !important;
                 font-size: 11px !important;
             }
@@ -150,7 +172,7 @@
                 box-shadow: none !important;
                 background: white !important;
             }
-        }
+        } /* <--- ปิดปีกกานี้ให้ถูกต้อง */
         
         /* Hide Scrollbar */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
@@ -288,7 +310,8 @@
             { id: 'Mitr', name: 'Mitr (เป็นมิตร)' }, 
             { id: 'Mali', name: 'Mali (ลายมือ)' },
             { id: 'Cudlaimue', name: 'ลายมือคัด (Cudlaimue)' },
-            { id: 'Layiji', name: 'ลายมือมหานิยม (Layiji)' }
+            { id: 'Layiji', name: 'ลายมือมหานิยม (Layiji)' },
+            { id: 'Chula', name: 'จุฬาภรณ์ลิขิต (Chula)' } // <--- เพิ่มฟอนต์ใหม่ตรงนี้
         ];
 
         const E_TAX_URL = "https://chaiyamartta.github.io/E-Tax-Donation/";
