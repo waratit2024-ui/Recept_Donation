@@ -27,6 +27,14 @@
     </script>
 
     <style>
+        <style>
+        /* --- นำเข้าฟอนต์ส่วนตัว (MyFont) --- */
+        @font-face {
+            font-family: 'MyFont';
+            src: url('https://cdn.jsdelivr.net/gh/Nawa65411597/my-fonts/CudlaimueSpeedyR-Regular-uhp9j3.woff') format('woff');
+            font-display: swap;
+        }
+
         /* Base styles */
         body { 
             font-family: 'Prompt', sans-serif; 
@@ -268,11 +276,12 @@
         };
 
         const FONT_OPTIONS = [
-            { id: 'Sarabun', name: 'Sarabun (ทางการ)' },
-            { id: 'Prompt', name: 'Prompt (ทันสมัย)' },
-            { id: 'Kanit', name: 'Kanit (ยอดนิยม)' },
-            { id: 'Mitr', name: 'Mitr (เป็นมิตร)' },
+            { id: 'Sarabun', name: 'Sarabun (ทางการ)' }, 
+            { id: 'Prompt', name: 'Prompt (ทันสมัย)' }, 
+            { id: 'Kanit', name: 'Kanit (ยอดนิยม)' }, 
+            { id: 'Mitr', name: 'Mitr (เป็นมิตร)' }, 
             { id: 'Mali', name: 'Mali (ลายมือ)' },
+            { id: 'MyFont', name: 'ลายมือส่วนตัว (MyFont)' } // <-- เพิ่มฟอนต์ของคุณตรงนี้
         ];
 
         const E_TAX_URL = "https://chaiyamartta.github.io/E-Tax-Donation/";
