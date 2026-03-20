@@ -27,20 +27,22 @@
     </script>
 
     <style>
-        <style>
-        /* --- นำเข้าฟอนต์ส่วนตัว (MyFont) --- */
+        /* --- นำเข้าฟอนต์ส่วนตัวที่ฝากไว้บน Firebase --- */
         @font-face {
           font-family: 'Cudlaimue';
           src: url('https://my-fonts-d25fb.web.app/fonts/CudlaimueSpeedyR-Regular-uhp9j3.woff2') format('woff2');
+          font-display: swap;
         }
         
         @font-face {
           font-family: 'Layiji';
           src: url('https://my-fonts-d25fb.web.app/fonts/LayijiMahaniyomV1_61ot.woff2') format('woff2');
+          font-display: swap;
         }
         
+        /* Base styles */
         body {
-          font-family: 'Cudlaimue', sans-serif;
+          /* ฟอนต์จะถูกจัดการอัตโนมัติจากระบบตั้งค่า (Settings) */
           scroll-behavior: smooth;
         }
         
@@ -148,6 +150,7 @@
                 box-shadow: none !important;
                 background: white !important;
             }
+        }
         
         /* Hide Scrollbar */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
@@ -284,8 +287,8 @@
             { id: 'Kanit', name: 'Kanit (ยอดนิยม)' }, 
             { id: 'Mitr', name: 'Mitr (เป็นมิตร)' }, 
             { id: 'Mali', name: 'Mali (ลายมือ)' },
-            { id: 'Layiji', name: 'Layiji ' },
-            { id: 'Cudlaimue', name: 'Cudlaimue (คัดลายมือ)' } // <-- เพิ่มฟอนต์ของคุณตรงนี้
+            { id: 'Cudlaimue', name: 'ลายมือคัด (Cudlaimue)' },
+            { id: 'Layiji', name: 'ลายมือมหานิยม (Layiji)' }
         ];
 
         const E_TAX_URL = "https://chaiyamartta.github.io/E-Tax-Donation/";
