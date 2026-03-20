@@ -27,29 +27,40 @@
     </script>
 
     <style>
-                        /* ถ้าเลือกฟอนต์พื้นฐาน ให้โหลดจาก Google Fonts (ยกเว้นฟอนต์ส่วนตัว) */
-                        ${!['Chula', 'Cudlaimue', 'Layiji'].includes(settings.fontFamily) 
-                            ? `@import url('https://fonts.googleapis.com/css2?family=${settings.fontFamily || 'Prompt'}:wght@300;400;500;600;700&display=swap');` 
-                            : ''}
+        /* โหลดฟอนต์จาก Google Fonts แบบอัตโนมัติ พร้อมเช็คความถูกต้องของน้ำหนักฟอนต์ */
+                        ${(() => {
+                            const font = settings.fontFamily || 'Prompt';
+                            // ถ้าเป็นฟอนต์ส่วนตัว ไม่ต้องดึงจาก Google
+                            if (['Chula', 'Cudlaimue', 'Layiji'].includes(font)) return '';
+                            
+                            // จัดรูปแบบชื่อฟอนต์ให้รองรับเว้นวรรค
+                            let googleFontName = font.replace(/ /g, '+');
+                            if (font === 'Playpen Sans Thai') googleFontName = 'Playpen+Sans'; // Playpen บน Google ใช้ชื่อนี้
+                            
+                            // Thasadith มีแค่น้ำหนัก 400 และ 700
+                            let weights = 'wght@300;400;500;600;700';
+                            if (font === 'Thasadith') weights = 'wght@400;700';
+                            
+                            return `@import url('https://fonts.googleapis.com/css2?family=${googleFontName}:${weights}&display=swap');`;
+                        })()}
 
-                        /* --- โหลดฟอนต์: จุฬาภรณ์ลิขิต (ไฟล์ .ttf) --- */
+                        /* --- โหลดฟอนต์ส่วนตัวที่ฝากไว้บน Netlify --- */
                         @font-face {
                           font-family: 'Chula' !important;
-                          src: url('https://my-fonts-d25fb.web.app/fonts/ChulabhornLikitText-Regular.ttf') format('truetype');
+                          src: url('https://sunny-croquembouche-9d7d67.netlify.app/fonts/chulabhornlikittext-regular.woff2') format('woff2');
+                          font-weight: 400;
                           font-display: swap;
                         }
 
-                        /* --- โหลดฟอนต์: ลายมือคัด (ไฟล์ .ttf) --- */
                         @font-face {
                           font-family: 'Cudlaimue' !important;
-                          src: url('https://my-fonts-d25fb.web.app/fonts/CudlaimueSpeedyR-Regular-uhp9j3.ttf') format('truetype');
+                          src: url('https://sunny-croquembouche-9d7d67.netlify.app/fonts/cudlaimuespeedyr-regular-uhp9j3.woff2') format('woff2');
                           font-display: swap;
                         }
 
-                        /* --- โหลดฟอนต์: ลายมือมหานิยม (ไฟล์ .otf) --- */
                         @font-face {
                           font-family: 'Layiji' !important;
-                          src: url('https://my-fonts-d25fb.web.app/fonts/LayijiMahaniyomV1_61ot.otf') format('opentype');
+                          src: url('https://sunny-croquembouche-9d7d67.netlify.app/fonts/layijimahaniyomv1_61ot.woff2') format('woff2');
                           font-display: swap;
                         }
 
@@ -60,7 +71,6 @@
                         body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, a, div, .font-sans { 
                             font-family: var(--font-dynamic) !important; 
                         }
-        
         /* Base styles */
         body { scroll-behavior: smooth; }
         
@@ -305,6 +315,10 @@
             { id: 'Kanit', name: 'Kanit (ยอดนิยม)' }, 
             { id: 'Mitr', name: 'Mitr (เป็นมิตร)' }, 
             { id: 'Mali', name: 'Mali (ลายมือ)' },
+            { id: 'Playpen Sans Thai', name: 'Playpen Sans Thai' },
+            { id: 'Thasadith', name: 'Thasadith' },
+            { id: 'IBM Plex Sans Thai', name: 'IBM Plex Sans Thai' },
+            { id: 'Krub', name: 'Krub' },
             { id: 'Chula', name: 'จุฬาภรณ์ลิขิต (Chula)' },
             { id: 'Cudlaimue', name: 'ลายมือคัด (Cudlaimue)' },
             { id: 'Layiji', name: 'ลายมือมหานิยม (Layiji)' }
