@@ -27,46 +27,28 @@
     </script>
 
     <style>
-        /* --- นำเข้าฟอนต์ส่วนตัวที่ฝากไว้บน Firebase --- */
-        @font-face {
-          font-family: 'Cudlaimue' !important;
-          src: url('https://my-fonts-d25fb.web.app/fonts/CudlaimueSpeedyR-Regular-uhp9j3.woff2') format('woff2');
-          font-display: swap;
-        }
-        
-        @font-face {
-          font-family: 'Layiji'!important;
-          src: url('https://my-fonts-d25fb.web.app/fonts/LayijiMahaniyomV1_61ot.woff2') format('woff2');
-          font-display: swap;
-        }
-
-        /* --- นำเข้าฟอนต์ Chula --- */
+        /* --- นำเข้าฟอนต์ส่วนตัวที่ฝากไว้บน Netlify --- */
         @font-face {
           font-family: 'Chula' !important;
-          src: url('https://my-fonts-d25fb.web.app/fonts/chulabhornlikittext-light.woff2') format('woff2');
-          font-weight: 300;
-          font-display: swap;
-        }
-
-        @font-face {
-          font-family: 'Chula' !important;
-          src: url('https://my-fonts-d25fb.web.app/fonts/chulabhornlikittext-regular.woff2') format('woff2');
+          src: url('https://sunny-croquembouche-9d7d67.netlify.app/fonts/chulabhornlikittext-regular.woff2') format('woff2');
           font-weight: 400;
           font-display: swap;
         }
 
         @font-face {
-          font-family: 'Chula' !important;
-          src: url('https://my-fonts-d25fb.web.app/fonts/chulabhornlikittext-bold.woff2') format('woff2');
-          font-weight: 700;
+          font-family: 'Cudlaimue' !important;
+          src: url('https://sunny-croquembouche-9d7d67.netlify.app/fonts/cudlaimuespeedyr-regular-uhp9j3.woff2') format('woff2');
+          font-display: swap;
+        }
+
+        @font-face {
+          font-family: 'Layiji' !important;
+          src: url('https://sunny-croquembouche-9d7d67.netlify.app/fonts/layijimahaniyomv1_61ot.woff2') format('woff2');
           font-display: swap;
         }
         
         /* Base styles */
-        body {
-          /* ฟอนต์จะถูกจัดการอัตโนมัติจากระบบตั้งค่า (Settings) */
-          scroll-behavior: smooth;
-        }
+        body { scroll-behavior: smooth; }
         
         /* Modern UI & Animations */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -309,9 +291,9 @@
             { id: 'Kanit', name: 'Kanit (ยอดนิยม)' }, 
             { id: 'Mitr', name: 'Mitr (เป็นมิตร)' }, 
             { id: 'Mali', name: 'Mali (ลายมือ)' },
+            { id: 'Chula', name: 'จุฬาภรณ์ลิขิต (Chula)' },
             { id: 'Cudlaimue', name: 'ลายมือคัด (Cudlaimue)' },
-            { id: 'Layiji', name: 'ลายมือมหานิยม (Layiji)' },
-            { id: 'Chula', name: 'จุฬาภรณ์ลิขิต (Chula)' } // <--- เพิ่มฟอนต์ใหม่ตรงนี้
+            { id: 'Layiji', name: 'ลายมือมหานิยม (Layiji)' }
         ];
 
         const E_TAX_URL = "https://chaiyamartta.github.io/E-Tax-Donation/";
