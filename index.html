@@ -3383,6 +3383,64 @@
         }
 
         // ==========================================
+        // ส่วนท้ายเว็บไซต์ (Global Footer)
+        // ==========================================
+        function GlobalFooter({ settings }) {
+            const theme = settings?.themeColor || 'orange';
+        
+            return (
+                <footer id="contact" className={`bg-gray-900 text-white pt-20 pb-10 mt-auto border-t-[8px] border-${theme}-500 w-full z-50 no-print`}>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
+                            <div>
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br from-${theme}-400 to-${theme}-600 flex items-center justify-center text-white shadow-lg`}>
+                                        <BookOpen className="w-6 h-6" />
+                                    </div>
+                                    <span className="text-3xl font-bold text-white tracking-tight">{settings?.templeName || 'ชื่อวัด'}</span>
+                                </div>
+                                <p className="text-gray-400 mb-6 font-light">ร่วมสร้างบุญกุศล สะสมบารมี เป็นที่พึ่งทางใจของชาวพุทธ</p>
+                                <div className="flex space-x-4">
+                                    {settings?.contact?.facebook && <a href={settings.contact.facebook} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white transition-all duration-300"><Facebook className="w-5 h-5" /></a>}
+                                    {settings?.contact?.line && <a href={settings.contact.line} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-green-500 hover:text-white transition-all duration-300"><MessageCircle className="w-5 h-5" /></a>}
+                                </div>
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold mb-6 text-white tracking-wide">ข้อมูลติดต่อ</h3>
+                                <ul className="space-y-5">
+                                    <li className="flex items-start">
+                                        <div className={`p-2 rounded-lg bg-gray-800 mr-4 text-${theme}-400`}><MapPin className="w-5 h-5" /></div>
+                                        <span className="text-gray-400 leading-relaxed">{settings?.contact?.address || '-'}</span>
+                                    </li>
+                                    <li className="flex items-center">
+                                        <div className={`p-2 rounded-lg bg-gray-800 mr-4 text-${theme}-400`}><Phone className="w-5 h-5" /></div>
+                                        <span className="text-gray-400 font-mono text-lg">{settings?.contact?.phone || '-'}</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold mb-6 text-white tracking-wide">เวลาทำการ</h3>
+                                <div className="bg-gray-800/50 border border-gray-700 rounded-2xl p-6">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-gray-300">เปิดให้เข้าชม/ทำบุญ</span>
+                                    </div>
+                                    <div className={`text-2xl font-bold text-${theme}-400 font-mono`}>06:00 - 18:00 น.</div>
+                                    <p className="text-gray-500 text-sm mt-2">เปิดทำการทุกวัน ไม่มีวันหยุด</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="text-center text-gray-600 text-sm border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
+                            <p>&copy; {new Date().getFullYear()} {settings?.templeName || 'ชื่อวัด'}. All rights reserved.</p>
+                            <p className="mt-2 md:mt-0 opacity-80">
+                                Powered by Donation Management System <span className={`text-${theme}-500 font-bold ml-1`}>v1.1.0</span>
+                            </p>
+                        </div>
+                    </div>
+                </footer>
+            );
+        }
+
+        // ==========================================
         // 7. APP & ROOT
         // ==========================================
         function App() {
