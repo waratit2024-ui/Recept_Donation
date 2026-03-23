@@ -2140,7 +2140,10 @@
                         phone: String(config.contact?.phone || ''),
                         address: String(config.contact?.address || ''),
                         facebook: String(config.contact?.facebook || ''),
-                        line: String(config.contact?.line || '')
+                        line: String(config.contact?.line || ''),
+                        footerSubtitle: String(config.contact?.footerSubtitle || ''),
+                        openHours: String(config.contact?.openHours || ''),
+                        openDays: String(config.contact?.openDays || '')
                     },
                     messages: {
                         thankYou: String(config.messages?.thankYou || '')
@@ -2792,8 +2795,49 @@
                             </div>
                         )}
 
-                        {activeSection === 'contact' && (<div className="space-y-6 animate-fade-in"><div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div><h3 className="text-lg font-bold mb-4 flex items-center"><MapPin className="w-5 h-5 mr-2" /> ข้อมูลติดต่อ</h3><div className="space-y-3"><div><label className="text-sm font-medium">เบอร์โทรศัพท์</label><input type="text" className="w-full p-2 border rounded" value={config.contact?.phone} onChange={e => setConfig({...config, contact: {...config.contact, phone: e.target.value}})} /></div><div><label className="text-sm font-medium">ที่อยู่</label><textarea rows="3" className="w-full p-2 border rounded" value={config.contact?.address} onChange={e => setConfig({...config, contact: {...config.contact, address: e.target.value}})}></textarea></div></div></div><div><h3 className="text-lg font-bold mb-4 flex items-center"><MessageCircle className="w-5 h-5 mr-2" /> โซเชียลมีเดีย</h3><div className="space-y-3"><div><label className="text-sm font-medium">Facebook Link</label><input type="text" className="w-full p-2 border rounded" value={config.contact?.facebook || ''} onChange={e => setConfig({...config, contact: {...config.contact, facebook: e.target.value}})} placeholder="https://facebook.com/..." /></div><div><label className="text-sm font-medium">Line Link / ID</label><input type="text" className="w-full p-2 border rounded" value={config.contact?.line || ''} onChange={e => setConfig({...config, contact: {...config.contact, line: e.target.value}})} placeholder="https://line.me/..." /></div></div></div></div></div>)}
-                        
+                        {activeSection === 'contact' && (
+                            <div className="space-y-6 animate-fade-in">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <h3 className="text-lg font-bold mb-4 flex items-center"><MapPin className="w-5 h-5 mr-2" /> ข้อมูลติดต่อ</h3>
+                                        <div className="space-y-3">
+                                            <div><label className="text-sm font-medium">เบอร์โทรศัพท์</label><input type="text" className="w-full p-2 border rounded" value={config.contact?.phone || ''} onChange={e => setConfig({...config, contact: {...config.contact, phone: e.target.value}})} /></div>
+                                            <div><label className="text-sm font-medium">ที่อยู่</label><textarea rows="3" className="w-full p-2 border rounded" value={config.contact?.address || ''} onChange={e => setConfig({...config, contact: {...config.contact, address: e.target.value}})}></textarea></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold mb-4 flex items-center"><MessageCircle className="w-5 h-5 mr-2" /> โซเชียลมีเดีย</h3>
+                                        <div className="space-y-3">
+                                            <div><label className="text-sm font-medium">Facebook Link</label><input type="text" className="w-full p-2 border rounded" value={config.contact?.facebook || ''} onChange={e => setConfig({...config, contact: {...config.contact, facebook: e.target.value}})} placeholder="https://facebook.com/..." /></div>
+                                            <div><label className="text-sm font-medium">Line Link / ID</label><input type="text" className="w-full p-2 border rounded" value={config.contact?.line || ''} onChange={e => setConfig({...config, contact: {...config.contact, line: e.target.value}})} placeholder="https://line.me/..." /></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {/* 🌟 ส่วนที่เพิ่มใหม่: ตั้งค่าข้อความส่วนท้ายเว็บ (Footer) 🌟 */}
+                                <div className="pt-6 border-t mt-4">
+                                    <h3 className="text-lg font-bold mb-4 flex items-center"><Layout className="w-5 h-5 mr-2 text-orange-600" /> ข้อความส่วนท้ายเว็บไซต์ (Footer)</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-3">
+                                            <div>
+                                                <label className="text-sm font-medium">คำโปรย / สโลแกน (ใต้ชื่อวัด)</label>
+                                                <input type="text" className="w-full p-2 border rounded" value={config.contact?.footerSubtitle !== undefined ? config.contact.footerSubtitle : 'ร่วมสร้างบุญกุศล สะสมบารมี เป็นที่พึ่งทางใจของชาวพุทธ'} onChange={e => setConfig({...config, contact: {...config.contact, footerSubtitle: e.target.value}})} placeholder="ร่วมสร้างบุญกุศล สะสมบารมี..." />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <div>
+                                                <label className="text-sm font-medium">เวลาทำการ (เช่น 06:00 - 18:00 น.)</label>
+                                                <input type="text" className="w-full p-2 border rounded" value={config.contact?.openHours !== undefined ? config.contact.openHours : '06:00 - 18:00 น.'} onChange={e => setConfig({...config, contact: {...config.contact, openHours: e.target.value}})} placeholder="06:00 - 18:00 น." />
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium">วันทำการ (เช่น เปิดทำการทุกวัน)</label>
+                                                <input type="text" className="w-full p-2 border rounded" value={config.contact?.openDays !== undefined ? config.contact.openDays : 'เปิดทำการทุกวัน ไม่มีวันหยุด'} onChange={e => setConfig({...config, contact: {...config.contact, openDays: e.target.value}})} placeholder="เปิดทำการทุกวัน ไม่มีวันหยุด" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         {activeSection === 'security' && (
                             <div className="space-y-6 animate-fade-in">
                                 <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-4 text-sm text-yellow-800"><AlertTriangle className="w-4 h-4 inline mr-1" /> เมนูจัดการ Username / Password ย้ายไปอยู่ที่เมนู <b>ผู้ใช้งาน (Users)</b> แล้ว</div>
@@ -3387,6 +3431,11 @@
         // ==========================================
         function GlobalFooter({ settings }) {
             const theme = settings?.themeColor || 'orange';
+            
+            // ดึงค่ามาจาก settings ถ้ายังไม่ได้ตั้งค่า ให้ใช้ค่าเริ่มต้น
+            const footerSubtitle = settings?.contact?.footerSubtitle !== undefined ? settings.contact.footerSubtitle : 'ร่วมสร้างบุญกุศล สะสมบารมี เป็นที่พึ่งทางใจของชาวพุทธ';
+            const openHours = settings?.contact?.openHours !== undefined ? settings.contact.openHours : '06:00 - 18:00 น.';
+            const openDays = settings?.contact?.openDays !== undefined ? settings.contact.openDays : 'เปิดทำการทุกวัน ไม่มีวันหยุด';
         
             return (
                 <footer id="contact" className={`bg-gray-900 text-white pt-20 pb-10 mt-auto border-t-[8px] border-${theme}-500 w-full z-50 no-print`}>
@@ -3399,7 +3448,7 @@
                                     </div>
                                     <span className="text-3xl font-bold text-white tracking-tight">{settings?.templeName || 'ชื่อวัด'}</span>
                                 </div>
-                                <p className="text-gray-400 mb-6 font-light">ร่วมสร้างบุญกุศล สะสมบารมี เป็นที่พึ่งทางใจของชาวพุทธ</p>
+                                <p className="text-gray-400 mb-6 font-light">{footerSubtitle}</p>
                                 <div className="flex space-x-4">
                                     {settings?.contact?.facebook && <a href={settings.contact.facebook} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white transition-all duration-300"><Facebook className="w-5 h-5" /></a>}
                                     {settings?.contact?.line && <a href={settings.contact.line} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-green-500 hover:text-white transition-all duration-300"><MessageCircle className="w-5 h-5" /></a>}
@@ -3424,8 +3473,8 @@
                                     <div className="flex justify-between items-center mb-2">
                                         <span className="text-gray-300">เปิดให้เข้าชม/ทำบุญ</span>
                                     </div>
-                                    <div className={`text-2xl font-bold text-${theme}-400 font-mono`}>06:00 - 18:00 น.</div>
-                                    <p className="text-gray-500 text-sm mt-2">เปิดทำการทุกวัน ไม่มีวันหยุด</p>
+                                    <div className={`text-2xl font-bold text-${theme}-400 font-mono`}>{openHours}</div>
+                                    <p className="text-gray-500 text-sm mt-2">{openDays}</p>
                                 </div>
                             </div>
                         </div>
