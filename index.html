@@ -2823,7 +2823,9 @@
             }, [isAuthenticated, userRole, perms]);
 
             const handleLogout = () => { 
-                window.location.reload(); 
+                setLoggedInUser(null); // ล้างข้อมูลที่จำไว้ในเครื่อง
+                onBack(); // เด้งกลับหน้าหลัก
+                showNotification('ออกจากระบบเรียบร้อยแล้ว');
             };
             
             const toggleAnnounced = (id, status) => { 
@@ -3503,12 +3505,74 @@
             const [loading, setLoading] = useState(true);
             const [user, setUser] = useState(null);
             const [notification, setNotification] = useState(null);
-            const [loggedInUser, setLoggedInUser] = useState(null);
 
             const showNotification = (msg, type = 'success') => {
                 setNotification({ msg, type });
                 setTimeout(() => setNotification(null), 3000);
             };
+
+            // ==========================================
+            // 🌟 1. ระบบจำการล็อกอิน (Session Persistence)
+            // ==========================================
+            const SESSION_TIMEOUT = 15 * 60 * 1000; // 15 นาที (หน่วยเป็นมิลลิวินาที)
+
+            const [loggedInUser, setLoggedInUserState] = useState(() => {
+                const savedUser = localStorage.getItem('temple_user');
+                const lastActivity = localStorage.getItem('temple_last_activity');
+                
+                // ถ้ารีเฟรชหน้าจอ ให้เช็คว่าเคยล็อกอินไว้ไหม และหมดเวลา 15 นาทีหรือยัง
+                if (savedUser && lastActivity) {
+                    if (new Date().getTime() - parseInt(lastActivity, 10) < SESSION_TIMEOUT) {
+                        return JSON.parse(savedUser);
+                    } else {
+                        localStorage.removeItem('temple_user');
+                        localStorage.removeItem('temple_last_activity');
+                    }
+                }
+                return null;
+            });
+
+            // สร้างฟังก์ชันครอบ setLoggedInUser เพื่อบันทึกลงเครื่องอัตโนมัติ
+            const setLoggedInUser = (userObj) => {
+                if (userObj) {
+                    localStorage.setItem('temple_user', JSON.stringify(userObj));
+                    localStorage.setItem('temple_last_activity', new Date().getTime().toString());
+                } else {
+                    localStorage.removeItem('temple_user');
+                    localStorage.removeItem('temple_last_activity');
+                }
+                setLoggedInUserState(userObj);
+            };
+
+            // ==========================================
+            // 🌟 2. ระบบเตะออกอัตโนมัติ (Auto Logout)
+            // ==========================================
+            useEffect(() => {
+                if (!loggedInUser) return;
+
+                // รีเซ็ตเวลาเมื่อมีการขยับเมาส์ พิมพ์คีย์บอร์ด หรือเลื่อนจอ
+                const resetTimer = () => {
+                    localStorage.setItem('temple_last_activity', new Date().getTime().toString());
+                };
+
+                const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+                events.forEach(e => window.addEventListener(e, resetTimer));
+
+                // เช็คทุกๆ 10 วินาที ว่าหมดเวลา 15 นาทีหรือยัง
+                const interval = setInterval(() => {
+                    const lastAct = localStorage.getItem('temple_last_activity');
+                    if (lastAct && (new Date().getTime() - parseInt(lastAct, 10) > SESSION_TIMEOUT)) {
+                        setLoggedInUser(null);
+                        setCurrentRoute('home');
+                        showNotification('หมดเวลาการใช้งาน 15 นาที กรุณาเข้าสู่ระบบใหม่', 'error');
+                    }
+                }, 10000);
+
+                return () => {
+                    events.forEach(e => window.removeEventListener(e, resetTimer));
+                    clearInterval(interval);
+                };
+            }, [loggedInUser]);
 
             useEffect(() => {
                 const initAuth = async () => {
