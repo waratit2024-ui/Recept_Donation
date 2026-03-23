@@ -2394,7 +2394,23 @@
                                     </div>
                                     <div className="space-y-4">
                                         <div>
-                                            <label className="block text-sm font-medium mb-1">รูปภาพประกอบ</label>
+                                            <label className="block text-sm font-medium mb-1">รูปภาพประกอบ (วางลิงก์ URL หรือ อัปโหลด)</label>
+                                            
+                                            {/* เพิ่มช่องสำหรับใส่ Link รูปภาพ */}
+                                            <input 
+                                                type="text" 
+                                                className="w-full p-2 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-orange-500 mb-3 text-sm" 
+                                                placeholder="วางลิงก์รูปภาพ (URL) ที่นี่... (แนะนำเพื่อประหยัดพื้นที่)" 
+                                                value={config.about?.imageUrl?.startsWith('data:image') ? '' : (config.about?.imageUrl || '')} 
+                                                onChange={e => setConfig({...config, about: { ...config.about, imageUrl: e.target.value }})} 
+                                            />
+
+                                            <div className="flex items-center justify-center mb-3">
+                                                <hr className="w-full border-gray-200" />
+                                                <span className="px-3 text-xs text-gray-400 whitespace-nowrap">หรืออัปโหลด (ขนาดไฟล์ไม่เกิน 1MB)</span>
+                                                <hr className="w-full border-gray-200" />
+                                            </div>
+
                                             <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer relative">
                                                 <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" accept="image/*" onChange={handleAboutImageUpload} disabled={isUploading} />
                                                 {isUploading ? (
@@ -2405,7 +2421,7 @@
                                                 ) : config.about?.imageUrl ? (
                                                     <div className="relative">
                                                         <img src={config.about.imageUrl} alt="Preview" className="max-h-48 mx-auto rounded shadow" />
-                                                        <div className="mt-2 text-xs text-gray-500">คลิกเพื่อเปลี่ยนรูป</div>
+                                                        <div className="mt-2 text-xs text-gray-500">คลิกเพื่ออัปโหลดเปลี่ยนรูป หรือวางลิงก์ใหม่ด้านบน</div>
                                                     </div>
                                                 ) : (
                                                     <div className="flex flex-col items-center text-gray-500">
