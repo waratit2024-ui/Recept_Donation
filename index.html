@@ -437,25 +437,63 @@
             const rcpSettings = settings.receipt || DEFAULT_SETTINGS.receipt;
             const templeLogo = rcpSettings.logoUrl || "https://img2.pic.in.th/pic/-Ver.3-1.png";
             
-            let printPurpose = donation.purpose;
-            if (!printPurpose || printPurpose === '-') {
-                printPurpose = rcpSettings.defaultPurpose;
-            } else if (donation.roongTaanDate) {
-                printPurpose = `จองโรงทาน วันที่ ${new Date(donation.roongTaanDate).toLocaleDateString('th-TH')} (${donation.roongTaanNote || ''})`;
+            // 🌟 ปรับปรุงการแยกรายการบริจาค (รองรับหลายรายการ) 🌟
+            let itemsList = [];
+            if (!donation.purpose || donation.purpose === '-') {
+                itemsList.push({ 
+                    description: rcpSettings.defaultPurpose, 
+                    amount: (donation.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 }) 
+                });
+            } else {
+                // แยกรายการด้วยลูกน้ำ
+                const parts = donation.purpose.split(', ');
+                parts.forEach((part) => {
+                    let desc = part;
+                    let amtStr = '';
+
+                    // จัดการข้อความโรงทาน
+                    if (part === 'จองโรงทาน' && donation.roongTaanDate) {
+                        desc = `จองโรงทาน วันที่ ${new Date(donation.roongTaanDate).toLocaleDateString('th-TH')} (${donation.roongTaanNote || ''})`;
+                    }
+
+                    // ดึงจำนวนเงินออกจากข้อความ เช่น "(600 บาท)" หรือ "500 บาท"
+                    const match1 = desc.match(/\(([\d,\.]+)\s*บาท\)$/);
+                    const match2 = desc.match(/\s([\d,\.]+)\s*บาท$/);
+
+                    if (match1) {
+                        amtStr = match1[1];
+                        desc = desc.replace(match1[0], '').trim();
+                    } else if (match2) {
+                        amtStr = match2[1];
+                        desc = desc.replace(match2[0], '').trim();
+                    }
+
+                    // แปลงรูปแบบตัวเลขให้มีทศนิยม
+                    if (amtStr) {
+                        const parsedAmt = parseFloat(amtStr.replace(/,/g, ''));
+                        if (!isNaN(parsedAmt)) amtStr = parsedAmt.toLocaleString(undefined, { minimumFractionDigits: 2 });
+                    } else if (part === 'จองโรงทาน' && donation.amount === 0) {
+                        amtStr = '-';
+                    }
+
+                    itemsList.push({ description: desc, amount: amtStr });
+                });
+
+                // ถ้าระบบหาจำนวนเงินแยกไม่ได้ และมีรายการเดียว ให้ใส่ยอดรวมทั้งหมด
+                if (itemsList.length === 1 && !itemsList[0].amount && donation.amount > 0) {
+                    itemsList[0].amount = (donation.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
+                }
             }
 
             const handleDownloadPDF = () => {
                 setIsExporting(true);
                 const element = document.getElementById('receipt-pdf-content');
-                
-                // เลื่อนหน้าจอไปบนสุดก่อนถ่ายภาพ ป้องกันพิกัดเพี้ยน
                 window.scrollTo(0, 0);
 
                 const opt = {
                     margin:       0,
                     filename:     `ใบเสร็จรับเงิน_${receiptNo}.pdf`,
                     image:        { type: 'jpeg', quality: 1.0 },
-                    // แก้บั๊กตัดขอบ: ลบ windowWidth ทิ้ง และใส่ scrollX, scrollY แทน
                     html2canvas:  { scale: 2.2, useCORS: true, logging: false, scrollY: 0, scrollX: 0 },
                     jsPDF:        { unit: 'px', format: [794, 1123], orientation: 'portrait' } 
                 };
@@ -473,12 +511,9 @@
 
             return (
                 <div className="fixed inset-0 bg-black/80 z-[150] flex flex-col items-center justify-start p-4 overflow-hidden">
-                    
-                    {/* Action Bar */}
                     <div className="bg-white rounded-xl px-4 py-3 flex justify-between items-center z-20 no-print shadow-xl w-full max-w-[794px] mb-4 shrink-0">
                         <h2 className="text-lg font-bold flex items-center text-gray-800">
-                            <ScrollText className="w-5 h-5 mr-2 text-orange-600"/> 
-                            ตัวอย่างใบเสร็จทางการ (A4 แนวตั้ง)
+                            <ScrollText className="w-5 h-5 mr-2 text-orange-600"/> ตัวอย่างใบเสร็จทางการ (A4 แนวตั้ง)
                         </h2>
                         <div className="flex gap-2">
                             <button onClick={handleDownloadPDF} disabled={isExporting} className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium flex items-center transition shadow">
@@ -494,26 +529,15 @@
                         </div>
                     </div>
 
-                    {/* Preview Area Container */}
-                    {/* แก้บั๊กตัดขอบ: เปลี่ยนจาก flex justify-center เป็น text-center */}
                     <div className="w-full max-w-[850px] flex-grow overflow-auto bg-gray-900/40 rounded-xl p-2 sm:p-6 hide-scrollbar text-center">
-                        
-                        {/* แก้บั๊กตัดขอบ: เพิ่ม inline-block, text-left และ margin: 0 auto */}
                         <div id="receipt-pdf-content" className="receipt-print-zone bg-white shadow-2xl relative shrink-0 inline-block text-left" 
                              style={{ margin: '0 auto', fontFamily: "'Sarabun', sans-serif", width: '794px', minHeight: '1050px', color: '#000', boxSizing: 'border-box', overflow: 'hidden' }}>
-                            
-                            {/* กรอบเส้นขอบด้านนอก */}
                             <div className="absolute inset-[15px] border border-gray-400 z-10 pointer-events-none" style={{WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact'}}></div>
-                            
-                            {/* ลายน้ำตรงกลาง */}
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03] z-0">
                                 <img src={templeLogo} crossOrigin="anonymous" style={{ width: '350px' }} alt="Watermark" />
                             </div>
 
-                            {/* ลด padding ลง */}
                             <div className="relative z-20 w-full h-full p-[35px] pt-[45px] flex flex-col">
-                                
-                                {/* --- ส่วนหัว (Header) --- */}
                                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #000', paddingBottom: '15px', marginBottom: '15px' }}>
                                     <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                                         <div style={{ width: '65px', height: '65px' }}>
@@ -525,7 +549,7 @@
                                             <p style={{ fontSize: '14px', margin: 0, fontWeight: 'bold' }}>เลขประจำตัวผู้เสียภาษีอากร: {rcpSettings.taxId}</p>
                                         </div>
                                     </div>
-                                    <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', justifyContnt: 'center' }}>
+                                    <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                                         <h2 style={{ fontSize: '22px', fontWeight: 'bold', margin: '0 0 2px 0', color: '#000' }}>ใบเสร็จรับเงิน</h2>
                                         <p style={{ fontSize: '12px', margin: '0 0 8px 0', color: '#666', letterSpacing: '1px' }}>RECEIPT / TAX DEDUCTION</p>
                                         <table style={{ fontSize: '14px', marginLeft: 'auto', textAlign: 'left' }}>
@@ -543,7 +567,6 @@
                                     </div>
                                 </div>
 
-                                {/* --- ส่วนข้อมูลลูกค้า/ผู้บริจาค (Customer Info) --- */}
                                 <div style={{ marginBottom: '15px', fontSize: '16px' }}>
                                     <table style={{ width: '100%' }}>
                                         <tbody>
@@ -559,7 +582,6 @@
                                     </table>
                                 </div>
 
-                                {/* --- ส่วนตารางรายการ (Items Table) --- */}
                                 <div style={{ flexGrow: 1 }}>
                                     <table style={{ width: '100%', fontSize: '16px', borderCollapse: 'collapse' }}>
                                         <thead>
@@ -570,24 +592,33 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr>
-                                                <td style={{ borderBottom: '1px dashed #999', padding: '12px 8px', textAlign: 'center', verticalAlign: 'top' }}>1</td>
-                                                <td style={{ borderBottom: '1px dashed #999', padding: '12px 8px', verticalAlign: 'top' }}>
-                                                    {printPurpose}
-                                                    {donation.generalNote && <div style={{ fontSize: '13px', color: '#666', marginTop: '4px' }}>หมายเหตุ: {donation.generalNote}</div>}
-                                                </td>
-                                                <td style={{ borderBottom: '1px dashed #999', padding: '12px 8px', textAlign: 'right', verticalAlign: 'top', fontWeight: 'bold' }}>
-                                                    {(donation.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style={{ padding: '8px' }}></td><td style={{ padding: '8px' }}></td><td style={{ padding: '8px' }}></td>
-                                            </tr>
+                                            {/* 🌟 แสดงตารางจากข้อมูลที่แยกไว้ 🌟 */}
+                                            {itemsList.map((item, idx) => (
+                                                <tr key={idx}>
+                                                    <td style={{ borderBottom: '1px dashed #999', padding: '12px 8px', textAlign: 'center', verticalAlign: 'top' }}>{idx + 1}</td>
+                                                    <td style={{ borderBottom: '1px dashed #999', padding: '12px 8px', verticalAlign: 'top' }}>
+                                                        {item.description}
+                                                        {/* นำหมายเหตุไปแปะใต้บรรทัดสุดท้าย */}
+                                                        {idx === itemsList.length - 1 && donation.generalNote && (
+                                                            <div style={{ fontSize: '13px', color: '#666', marginTop: '4px' }}>หมายเหตุ: {donation.generalNote}</div>
+                                                        )}
+                                                    </td>
+                                                    <td style={{ borderBottom: '1px dashed #999', padding: '12px 8px', textAlign: 'right', verticalAlign: 'top', fontWeight: 'bold' }}>
+                                                        {item.amount || '-'}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            
+                                            {/* เติมช่องว่างให้ครบ 3 บรรทัดถ้าข้อมูลน้อย */}
+                                            {itemsList.length < 3 && [...Array(3 - itemsList.length)].map((_, i) => (
+                                                <tr key={`empty-${i}`}>
+                                                    <td style={{ padding: '12px 8px' }}>&nbsp;</td><td style={{ padding: '12px 8px' }}></td><td style={{ padding: '12px 8px' }}></td>
+                                                </tr>
+                                            ))}
                                         </tbody>
                                     </table>
                                 </div>
 
-                                {/* --- ส่วนสรุปยอด (Totals) --- */}
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '10px', borderTop: '2px solid #000', paddingTop: '15px' }}>
                                     <div style={{ width: '60%' }}>
                                         <div style={{ backgroundColor: '#f1f5f9', padding: '8px 15px', borderRadius: '4px', textAlign: 'center', fontWeight: 'bold', fontSize: '16px', border: '1px solid #cbd5e1' }} style={{WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact'}}>
@@ -608,13 +639,11 @@
                                     </div>
                                 </div>
 
-                                {/* --- ข้อความอ้างอิงสรรพากร --- */}
                                 <div style={{ marginTop: '20px', fontSize: '13px', color: '#4b5563', textAlign: 'center' }}>
                                     <p style={{ margin: '0 0 4px 0' }}>" สุโข ปุญฺญสฺส อุจฺจโย : การสั่งสมบุญนำสุขมาให้ "</p>
                                     <p style={{ margin: 0, fontWeight: 'bold', color: '#000' }}>* เอกสารฉบับนี้เป็นใบเสร็จรับเงินที่สมบูรณ์ สามารถนำไปใช้เป็นหลักฐานประกอบการลดหย่อนภาษีได้ (e-Donation)</p>
                                 </div>
 
-                                {/* --- ส่วนลายเซ็น (Signatures) --- */}
                                 <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '35px', fontSize: '14px', textAlign: 'center' }}>
                                     <div style={{ width: '35%' }}>
                                         <div style={{ borderBottom: '1px solid #000', marginBottom: '8px', height: '40px' }}></div>
@@ -641,7 +670,6 @@
                 </div>
             );
         }
-
         // ----- Login & Reset Password Modal -----
         function LoginScreen({ onClose, onLoginSuccess, onUpdateSettings, showNotification, settings }) {
             const [username, setUsername] = useState('');
