@@ -2983,7 +2983,7 @@
             );
         }
 
-        function OfficialWebsite({ onNavigate, donations, settings, setLoggedInUser, showNotification, onUpdateSettings }) {
+        function OfficialWebsite({ onNavigate, donations, settings, setLoggedInUser, showNotification, onUpdateSettings, loggedInUser }) {
             const [isScrolled, setIsScrolled] = useState(false);
             const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
             const [newsList, setNewsList] = useState([]);
@@ -3009,6 +3009,15 @@
                     setShowPopup(true);
                 }
             }, [settings.popup?.enabled, settings.popup?.imageUrl]);
+
+            // 🌟 เช็คว่าล็อกอินค้างไว้อยู่หรือไม่ 🌟
+            const handleAdminClick = () => {
+                if (loggedInUser) {
+                    onNavigate('donate-system'); // ถ้ามีล็อกอินค้างไว้ ให้เด้งไปหน้าแอดมินเลย
+                } else {
+                    setShowLoginModal(true); // ถ้าไม่มี ค่อยให้โชว์ฟอร์มกรอกรหัส
+                }
+            };
 
             const renderHeading = () => {
                 if (!aboutHighlight) return aboutHeading;
@@ -3060,8 +3069,8 @@
                         <h1 className="text-3xl font-bold mb-2">ปิดปรับปรุงชั่วคราว</h1>
                         <p>ระบบกำลังดำเนินการปรับปรุง ขออภัยในความไม่สะดวก</p>
                         <p className="mt-4 text-sm text-gray-500">{settings.templeName}</p>
-                        <button onClick={() => setShowLoginModal(true)} className={`absolute top-4 right-4 p-2 text-gray-400 hover:text-${theme}-600 transition-colors flex items-center gap-1 group`} title="ผู้ดูแลระบบ">
-                            <span className="text-xs opacity-0 group-hover:opacity-100 transition-opacity">เข้าสู่ระบบจัดการ</span>
+                        <button onClick={handleAdminClick} className={`absolute top-4 right-4 p-2 text-gray-400 hover:text-${theme}-600 transition-colors flex items-center gap-1 group`} title="ผู้ดูแลระบบ">
+                            <span className="text-xs opacity-0 group-hover:opacity-100 transition-opacity">{loggedInUser ? 'กลับสู่ระบบจัดการ' : 'เข้าสู่ระบบจัดการ'}</span>
                             <Lock className="w-5 h-5" />
                         </button>
                         {showLoginModal && (
@@ -3149,24 +3158,24 @@
 
                                     {settings.systemStatus === 'open' ? (
                                         <div className="flex gap-3 items-center">
-                                            <button onClick={() => { setLoggedInUser(null); onNavigate('donate-system'); }} className={`bg-animate-gradient bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 text-white px-6 py-2.5 rounded-full font-bold flex items-center shadow-lg hover:shadow-orange-500/50 transition-all duration-300 transform hover:-translate-y-1`}>
+                                            <button onClick={() => { onNavigate('donate-system'); }} className={`bg-animate-gradient bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 text-white px-6 py-2.5 rounded-full font-bold flex items-center shadow-lg hover:shadow-orange-500/50 transition-all duration-300 transform hover:-translate-y-1`}>
                                                 <HeartHandshake className="w-4 h-4 mr-2" /> ร่วมทำบุญออนไลน์
                                             </button>
                                             
-                                            <button onClick={() => setShowLoginModal(true)} className="group relative px-5 py-2.5 rounded-full overflow-hidden shadow-lg hover:shadow-gray-900/30 transition-all duration-300 transform hover:-translate-y-1 bg-gray-900 border border-gray-700">
+                                            <button onClick={handleAdminClick} className="group relative px-5 py-2.5 rounded-full overflow-hidden shadow-lg hover:shadow-gray-900/30 transition-all duration-300 transform hover:-translate-y-1 bg-gray-900 border border-gray-700">
                                                 <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 opacity-0 group-hover:opacity-40 transition-opacity duration-500"></div>
                                                 <div className="relative flex items-center text-white font-medium text-sm tracking-wide">
                                                     <Lock className="w-4 h-4 mr-2 group-hover:animate-bounce" />
-                                                    <span>ผู้ดูแลระบบ</span>
+                                                    <span>{loggedInUser ? 'ระบบจัดการ' : 'ผู้ดูแลระบบ'}</span>
                                                 </div>
                                             </button>
                                         </div>
                                     ) : (
-                                        <button onClick={() => setShowLoginModal(true)} className="group relative px-6 py-2.5 rounded-full overflow-hidden shadow-lg hover:shadow-gray-900/30 transition-all duration-300 transform hover:-translate-y-1 bg-gray-900 border border-gray-700">
+                                        <button onClick={handleAdminClick} className="group relative px-6 py-2.5 rounded-full overflow-hidden shadow-lg hover:shadow-gray-900/30 transition-all duration-300 transform hover:-translate-y-1 bg-gray-900 border border-gray-700">
                                             <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 opacity-0 group-hover:opacity-40 transition-opacity duration-500"></div>
                                             <div className="relative flex items-center text-white font-bold text-sm tracking-wide">
                                                 <Lock className="w-4 h-4 mr-2 group-hover:animate-bounce" />
-                                                <span>เข้าสู่ระบบจัดการ</span>
+                                                <span>{loggedInUser ? 'กลับสู่ระบบจัดการ' : 'เข้าสู่ระบบจัดการ'}</span>
                                             </div>
                                         </button>
                                     )}
@@ -3191,16 +3200,16 @@
 
                                     {settings.systemStatus === 'open' ? (
                                         <>
-                                            <button onClick={() => { setLoggedInUser(null); onNavigate('donate-system'); }} className={`mt-4 w-full bg-animate-gradient bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 text-white px-4 py-4 rounded-xl font-bold flex justify-center items-center shadow-md`}>
+                                            <button onClick={() => { setMobileMenuOpen(false); onNavigate('donate-system'); }} className={`mt-4 w-full bg-animate-gradient bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 text-white px-4 py-4 rounded-xl font-bold flex justify-center items-center shadow-md`}>
                                                 <HeartHandshake className="w-5 h-5 mr-2" /> ร่วมทำบุญออนไลน์
                                             </button>
-                                            <button onClick={() => { setMobileMenuOpen(false); setShowLoginModal(true); }} className={`mt-2 w-full bg-gray-900 text-white px-4 py-4 rounded-xl font-bold flex justify-center items-center shadow-md`}>
-                                                <Lock className="w-5 h-5 mr-2" /> เข้าสู่ระบบ (ผู้ดูแล)
+                                            <button onClick={() => { setMobileMenuOpen(false); handleAdminClick(); }} className={`mt-2 w-full bg-gray-900 text-white px-4 py-4 rounded-xl font-bold flex justify-center items-center shadow-md`}>
+                                                <Lock className="w-5 h-5 mr-2" /> {loggedInUser ? 'ระบบจัดการ' : 'เข้าสู่ระบบ (ผู้ดูแล)'}
                                             </button>
                                         </>
                                     ) : (
-                                        <button onClick={() => { setMobileMenuOpen(false); setShowLoginModal(true); }} className={`mt-4 w-full bg-gray-900 text-white px-4 py-4 rounded-xl font-bold flex justify-center items-center shadow-md`}>
-                                            <Lock className="w-5 h-5 mr-2" /> เข้าสู่ระบบจัดการ
+                                        <button onClick={() => { setMobileMenuOpen(false); handleAdminClick(); }} className={`mt-4 w-full bg-gray-900 text-white px-4 py-4 rounded-xl font-bold flex justify-center items-center shadow-md`}>
+                                            <Lock className="w-5 h-5 mr-2" /> {loggedInUser ? 'กลับสู่ระบบจัดการ' : 'เข้าสู่ระบบจัดการ'}
                                         </button>
                                     )}
                                 </div>
@@ -3228,7 +3237,7 @@
                             
                             {settings.systemStatus === 'open' ? (
                                 <div className="flex flex-col sm:flex-row flex-wrap gap-5 justify-center">
-                                    <button onClick={() => { setLoggedInUser(null); onNavigate('donate-system'); }} className={`bg-animate-gradient bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 text-white px-8 py-4 rounded-full font-bold text-lg flex items-center justify-center transition-all duration-300 transform hover:scale-105 shadow-[0_0_20px_rgba(249,115,22,0.5)] hover:shadow-[0_0_30px_rgba(249,115,22,0.8)] border border-white/20 animate-glow`}>
+                                    <button onClick={() => { onNavigate('donate-system'); }} className={`bg-animate-gradient bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 text-white px-8 py-4 rounded-full font-bold text-lg flex items-center justify-center transition-all duration-300 transform hover:scale-105 shadow-[0_0_20px_rgba(249,115,22,0.5)] hover:shadow-[0_0_30px_rgba(249,115,22,0.8)] border border-white/20 animate-glow`}>
                                         <HeartHandshake className="w-6 h-6 mr-2" /> ร่วมบริจาค / จองโรงทาน
                                     </button>
                                     
@@ -3372,155 +3381,33 @@
                 </div>
             );
         }
-        // ==========================================
-        // ระบบอัปโหลดสลิปผ่านมือถือ (Remote Slip Upload)
-        // ==========================================
-        function RemoteSlipUpload({ db }) {
-            const [status, setStatus] = useState('waiting'); // waiting, uploading, success, error
-            const [preview, setPreview] = useState(null);
-            const urlParams = new URLSearchParams(window.location.search);
-            const sessionId = urlParams.get('upload_ref');
-        
-            if (!sessionId) return <div className="p-8 text-center text-red-500 font-bold">❌ ลิงก์ไม่ถูกต้อง หรือหมดอายุแล้ว</div>;
-        
-            const handleMobileUpload = async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                
-                setStatus('uploading');
-                try {
-                    // 1. ย่อรูป
-                    const resizedImage = await resizeImage(file);
-                    setPreview(resizedImage);
-                    
-                    // 2. ส่งรูปเข้า Firebase เพื่อให้หน้าจอเจ้าหน้าที่เด้งรับ
-                    await updateDoc(doc(db, 'temp_uploads', sessionId), {
-                        slipImage: resizedImage,
-                        status: 'completed',
-                        updatedAt: new Date().toISOString()
-                    });
-                    
-                    setStatus('success');
-                } catch (error) {
-                    console.error(error);
-                    setStatus('error');
-                }
-            };
-        
-            return (
-                <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 font-prompt">
-                    <div className="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center">
-                        <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <UploadCloud className="w-8 h-8 text-orange-600" />
-                        </div>
-                        <h2 className="text-xl font-bold text-gray-800 mb-2">อัปโหลดสลิปโอนเงิน</h2>
-                        <p className="text-sm text-gray-500 mb-6">กรุณาแนบภาพสลิป เพื่อส่งให้เจ้าหน้าที่</p>
-        
-                        {status === 'waiting' && (
-                            <label className="block w-full bg-orange-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition cursor-pointer">
-                                เลือกรูปสลิปจากมือถือ
-                                <input type="file" accept="image/*" className="hidden" onChange={handleMobileUpload} />
-                            </label>
-                        )}
-        
-                        {status === 'uploading' && (
-                            <div className="py-8 flex flex-col items-center">
-                                <Loader className="w-10 h-10 text-orange-500 animate-spin mb-4" />
-                                <p className="text-orange-600 font-bold animate-pulse">กำลังส่งรูปให้เจ้าหน้าที่...</p>
-                            </div>
-                        )}
-        
-                        {status === 'success' && (
-                            <div className="py-4 animate-scale-up">
-                                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                                <h3 className="text-xl font-bold text-green-600 mb-2">ส่งสลิปสำเร็จ!</h3>
-                                <p className="text-sm text-gray-500 mb-4">ระบบบันทึกรูปภาพเรียบร้อยแล้ว<br/>คุณสามารถปิดหน้านี้ได้เลยครับ</p>
-                                {preview && <img src={preview} alt="Slip" className="w-32 mx-auto rounded-lg border shadow-sm" />}
-                            </div>
-                        )}
-        
-                        {status === 'error' && (
-                            <div className="py-4">
-                                <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                                <h3 className="text-lg font-bold text-red-600 mb-2">เกิดข้อผิดพลาด</h3>
-                                <p className="text-sm text-gray-500 mb-4">ไฟล์อาจใหญ่เกินไป หรือการเชื่อมต่อมีปัญหา</p>
-                                <button onClick={() => setStatus('waiting')} className="bg-gray-200 px-6 py-2 rounded-lg font-bold">ลองใหม่อีกครั้ง</button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        }
 
-        // ==========================================
-        // ส่วนท้ายเว็บไซต์ (Global Footer) แบบดั้งเดิมของคุณ
-        // ==========================================
-        function GlobalFooter({ settings }) {
-            // กำหนด theme พื้นฐานเผื่อ settings ยังโหลดไม่เสร็จ
-            const theme = settings?.themeColor || 'orange';
-        
-            return (
-                <footer id="contact" className={`bg-gray-900 text-white pt-20 pb-10 mt-auto border-t-[8px] border-${theme}-500 w-full z-50 no-print`}>
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
-                            <div>
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br from-${theme}-400 to-${theme}-600 flex items-center justify-center text-white shadow-lg`}>
-                                        <BookOpen className="w-6 h-6" />
-                                    </div>
-                                    <span className="text-3xl font-bold text-white tracking-tight">{settings?.templeName || 'ชื่อวัด'}</span>
-                                </div>
-                                <p className="text-gray-400 mb-6 font-light">ร่วมสร้างบุญกุศล สะสมบารมี เป็นที่พึ่งทางใจของชาวพุทธ</p>
-                                <div className="flex space-x-4">
-                                    {settings?.contact?.facebook && <a href={settings.contact.facebook} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white transition-all duration-300"><Facebook className="w-5 h-5" /></a>}
-                                    {settings?.contact?.line && <a href={settings.contact.line} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-green-500 hover:text-white transition-all duration-300"><MessageCircle className="w-5 h-5" /></a>}
-                                </div>
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-bold mb-6 text-white tracking-wide">ข้อมูลติดต่อ</h3>
-                                <ul className="space-y-5">
-                                    <li className="flex items-start">
-                                        <div className={`p-2 rounded-lg bg-gray-800 mr-4 text-${theme}-400`}><MapPin className="w-5 h-5" /></div>
-                                        <span className="text-gray-400 leading-relaxed">{settings?.contact?.address || '-'}</span>
-                                    </li>
-                                    <li className="flex items-center">
-                                        <div className={`p-2 rounded-lg bg-gray-800 mr-4 text-${theme}-400`}><Phone className="w-5 h-5" /></div>
-                                        <span className="text-gray-400 font-mono text-lg">{settings?.contact?.phone || '-'}</span>
-                                    </li>
-                                </ul>
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-bold mb-6 text-white tracking-wide">เวลาทำการ</h3>
-                                <div className="bg-gray-800/50 border border-gray-700 rounded-2xl p-6">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <span className="text-gray-300">เปิดให้เข้าชม/ทำบุญ</span>
-                                    </div>
-                                    <div className={`text-2xl font-bold text-${theme}-400 font-mono`}>06:00 - 18:00 น.</div>
-                                    <p className="text-gray-500 text-sm mt-2">เปิดทำการทุกวัน ไม่มีวันหยุด</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="text-center text-gray-600 text-sm border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
-                            <p>&copy; {new Date().getFullYear()} {settings?.templeName || 'ชื่อวัด'}. All rights reserved.</p>
-                            <p className="mt-2 md:mt-0 opacity-80">
-                                Powered by Donation Management System <span className={`text-${theme}-500 font-bold ml-1`}>v1.1.0</span>
-                            </p>
-                        </div>
-                    </div>
-                </footer>
-            );
-        }
-                    
         // ==========================================
         // 7. APP & ROOT
         // ==========================================
         function App() {
-            const [currentRoute, setCurrentRoute] = useState('home');
+            const SESSION_TIMEOUT = 15 * 60 * 1000; // 15 นาที
+            
+            // เพิ่มระบบจำหน้าล่าสุด (รีเฟรชแล้วอยู่หน้าเดิม)
+            const [currentRoute, setCurrentRoute] = useState(() => {
+                const savedRoute = localStorage.getItem('temple_current_route');
+                const lastActivity = localStorage.getItem('temple_last_activity');
+                if (savedRoute === 'donate-system' && lastActivity && (new Date().getTime() - parseInt(lastActivity, 10) < SESSION_TIMEOUT)) {
+                    return 'donate-system';
+                }
+                return 'home';
+            });
+
             const [donations, setDonations] = useState([]);
             const [settings, setSettings] = useState(DEFAULT_SETTINGS);
             const [loading, setLoading] = useState(true);
             const [user, setUser] = useState(null);
             const [notification, setNotification] = useState(null);
+            
+            // บันทึกหน้าปัจจุบันลงเครื่อง
+            useEffect(() => {
+                localStorage.setItem('temple_current_route', currentRoute);
+            }, [currentRoute]);
 
             const showNotification = (msg, type = 'success') => {
                 setNotification({ msg, type });
@@ -3530,13 +3417,11 @@
             // ==========================================
             // 🌟 1. ระบบจำการล็อกอิน (Session Persistence)
             // ==========================================
-            const SESSION_TIMEOUT = 15 * 60 * 1000; // 15 นาที (หน่วยเป็นมิลลิวินาที)
-
             const [loggedInUser, setLoggedInUserState] = useState(() => {
                 const savedUser = localStorage.getItem('temple_user');
                 const lastActivity = localStorage.getItem('temple_last_activity');
                 
-                // ถ้ารีเฟรชหน้าจอ ให้เช็คว่าเคยล็อกอินไว้ไหม และหมดเวลา 15 นาทีหรือยัง
+                // ถ้ารีเฟรชหน้าจอ ให้เช็คว่าเคยล็อกอินไว้ไหม และหมดเวลาหรือยัง
                 if (savedUser && lastActivity) {
                     if (new Date().getTime() - parseInt(lastActivity, 10) < SESSION_TIMEOUT) {
                         return JSON.parse(savedUser);
@@ -3548,7 +3433,6 @@
                 return null;
             });
 
-            // สร้างฟังก์ชันครอบ setLoggedInUser เพื่อบันทึกลงเครื่องอัตโนมัติ
             const setLoggedInUser = (userObj) => {
                 if (userObj) {
                     localStorage.setItem('temple_user', JSON.stringify(userObj));
@@ -3566,7 +3450,6 @@
             useEffect(() => {
                 if (!loggedInUser) return;
 
-                // รีเซ็ตเวลาเมื่อมีการขยับเมาส์ พิมพ์คีย์บอร์ด หรือเลื่อนจอ
                 const resetTimer = () => {
                     localStorage.setItem('temple_last_activity', new Date().getTime().toString());
                 };
@@ -3574,7 +3457,6 @@
                 const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
                 events.forEach(e => window.addEventListener(e, resetTimer));
 
-                // เช็คทุกๆ 10 วินาที ว่าหมดเวลา 15 นาทีหรือยัง
                 const interval = setInterval(() => {
                     const lastAct = localStorage.getItem('temple_last_activity');
                     if (lastAct && (new Date().getTime() - parseInt(lastAct, 10) > SESSION_TIMEOUT)) {
@@ -3755,15 +3637,11 @@
             const handleUpdateSettings = async (newSettings) => {
                 if (!user) return;
                 try {
-                    // ทำความสะอาดข้อมูลทั่วไป (ล้างค่า undefined ที่ทำให้เกิด invalid nested entity)
                     const cleanSettings = JSON.parse(JSON.stringify(newSettings));
-                    
-                    // ส่งข้อมูลเข้าฐานข้อมูล
                     await setDoc(doc(db, 'settings', 'config'), cleanSettings);
                     showNotification('บันทึกการตั้งค่าระบบเรียบร้อยแล้ว!');
                 } catch (e) {
                     console.error("Firebase Update Error:", e);
-                    // ถ้าแอบอัปโหลดรูปใหญ่เกิน 1MB มา มันจะแจ้งเตือนให้รู้ตัวแทนการลบทิ้งครับ
                     if (e.message.includes('exceeds the maximum allowed size')) {
                         showNotification("บันทึกไม่สำเร็จ: รูปภาพมีขนาดใหญ่เกิน 1MB กรุณาใช้รูปที่ไฟล์เล็กกว่านี้", 'error');
                     } else {
@@ -3788,9 +3666,6 @@
                 }
             };
 
-            // ==========================================
-            // ส่วนที่ 2: ดักจับ URL ถ้าเป็นการแสกน QR Code ให้ออกไปหน้าอัปโหลดมือถือ
-            // ==========================================
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('upload_ref')) {
                 return (
@@ -3800,19 +3675,47 @@
                             :root { --font-dynamic: '${settings.fontFamily || 'Prompt'}', sans-serif; }
                             body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, a, div, .font-sans { font-family: var(--font-dynamic) !important; }
                         `}</style>
-                        {/* เรียกแสดงหน้าอัปโหลดสลิปสำหรับมือถือ */}
                         <div className="flex-grow">
                             <RemoteSlipUpload db={db} />
                         </div>
                     </div>
                 );
             }
-            // ==========================================
 
             return (
                 <div className={`font-sans text-gray-800 flex flex-col min-h-screen`}>
+                    
+                    {/* ระบบโหลดฟอนต์ Google Fonts အัฃริยะ */}
                     <style>{`
-                        @import url('https://fonts.googleapis.com/css2?family=${settings.fontFamily || 'Prompt'}:wght@300;400;500;600;700&display=swap');
+                        ${(() => {
+                            const font = settings.fontFamily || 'Prompt';
+                            if (['Chula', 'Cudlaimue', 'Layiji'].includes(font)) return '';
+                            let googleFontName = font.replace(/ /g, '+');
+                            if (font === 'Playpen Sans Thai') googleFontName = 'Playpen+Sans'; 
+                            let fontWeights = '300,400,500,600,700';
+                            if (font === 'Thasadith') fontWeights = '400,700';
+                            return "@import url('https://fonts.googleapis.com/css2?family=" + googleFontName + ":wght@" + fontWeights + "&display=swap');";
+                        })()}
+
+                        @font-face {
+                          font-family: 'Chula' !important;
+                          src: url('https://sunny-croquembouche-9d7d67.netlify.app/fonts/chulabhornlikittext-regular.woff2') format('woff2');
+                          font-weight: 400;
+                          font-display: swap;
+                        }
+
+                        @font-face {
+                          font-family: 'Cudlaimue' !important;
+                          src: url('https://sunny-croquembouche-9d7d67.netlify.app/fonts/cudlaimuespeedyr-regular-uhp9j3.woff2') format('woff2');
+                          font-display: swap;
+                        }
+
+                        @font-face {
+                          font-family: 'Layiji' !important;
+                          src: url('https://sunny-croquembouche-9d7d67.netlify.app/fonts/layijimahaniyomv1_61ot.woff2') format('woff2');
+                          font-display: swap;
+                        }
+
                         html { font-size: 80% !important; }
                         @media print { html { font-size: 100% !important; } }
                         :root { --font-dynamic: '${settings.fontFamily || 'Prompt'}', sans-serif; }
@@ -3849,11 +3752,11 @@
                                 setLoggedInUser={setLoggedInUser}
                                 showNotification={showNotification}
                                 onUpdateSettings={handleUpdateSettings}
+                                loggedInUser={loggedInUser} // ส่งข้อมูลว่าล็อกอินอยู่ไปให้หน้าหลัก
                             />
                         )}
                     </div>
 
-                    {/* เรียกใช้ Footer ไว้ล่างสุดนอกเงื่อนไข (จะโชว์ทุกหน้า!) */}
                     {!loading && <GlobalFooter settings={settings} />}
                 </div>
             );
