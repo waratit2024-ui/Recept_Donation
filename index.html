@@ -2098,7 +2098,6 @@
                     qrCodeUrl: String(config.qrCodeUrl || ''),
                     marqueeText: String(config.marqueeText || ''),
                     requireSlip: Boolean(config.requireSlip ?? true),
-                    // --- เพิ่มการบันทึกป๊อปอัปตรงนี้ ---
                     popup: {
                         enabled: Boolean(config.popup?.enabled || false),
                         imageUrl: String(config.popup?.imageUrl || '')
@@ -2176,6 +2175,7 @@
             const handleAddDonationType = () => { const newType = { id: `type_${Date.now()}`, name: 'รายการใหม่', hasQuantity: false, price: 0, active: true }; setConfig({ ...config, donationTypes: [...(config.donationTypes || []), newType] }); };
             const handleRemoveDonationType = (index) => { const newTypes = [...(config.donationTypes || [])]; newTypes.splice(index, 1); setConfig({...config, donationTypes: newTypes}); };
             const handleUpdateDonationType = (index, field, value) => { const newTypes = [...(config.donationTypes || [])]; newTypes[index] = { ...newTypes[index], [field]: value }; setConfig({...config, donationTypes: newTypes}); };
+            
             const handleClearDataSubmit = () => { 
                 const adminExists = (config.users || []).find(u => u.role === 'admin' && u.password === confirmClear);
                 if (adminExists) { 
@@ -2186,6 +2186,97 @@
                 } else { 
                     setClearError('รหัสผ่าน Admin ไม่ถูกต้อง'); 
                 } 
+            };
+
+            // 🌟 1. ฟังก์ชันสำรองข้อมูล (Export JSON) 🌟
+            const handleExportJSON = async () => {
+                try {
+                    setIsUploading(true);
+                    
+                    // ดึงข้อมูลทั้งหมดจาก Firestore
+                    const donationsSnap = await getDocs(collection(db, 'donations'));
+                    const donationsData = donationsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                    const newsSnap = await getDocs(collection(db, 'news'));
+                    const newsData = newsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                    const backupData = {
+                        app: "Donation Management System",
+                        exportDate: new Date().toISOString(),
+                        settings: config,
+                        donations: donationsData,
+                        news: newsData
+                    };
+
+                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+                    const downloadAnchorNode = document.createElement('a');
+                    downloadAnchorNode.setAttribute("href", dataStr);
+                    downloadAnchorNode.setAttribute("download", `Backup_${config.templeName}_${new Date().toISOString().split('T')[0]}.json`);
+                    document.body.appendChild(downloadAnchorNode);
+                    downloadAnchorNode.click();
+                    downloadAnchorNode.remove();
+                    
+                    alert("ดาวน์โหลดไฟล์สำรองข้อมูล (Backup) เสร็จสมบูรณ์");
+                } catch (error) {
+                    alert("เกิดข้อผิดพลาดในการสำรองข้อมูล: " + error.message);
+                } finally {
+                    setIsUploading(false);
+                }
+            };
+
+            // 🌟 2. ฟังก์ชันกู้คืนข้อมูล (Import JSON) 🌟
+            const handleImportJSON = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                if (!confirm('คำเตือนตัวโตๆ: ข้อมูลปัจจุบันในระบบทั้งหมดจะถูก "ลบทิ้งและเขียนทับ" ด้วยข้อมูลจากไฟล์นี้!\n\nคุณแน่ใจหรือไม่ว่าต้องการกู้คืนข้อมูล?')) {
+                    e.target.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    setIsUploading(true);
+                    try {
+                        const importedData = JSON.parse(event.target.result);
+                        
+                        if (!importedData.settings || !importedData.donations) {
+                            throw new Error("รูปแบบไฟล์ไม่ถูกต้อง หรือไม่ใช่ไฟล์ Backup ของระบบนี้");
+                        }
+
+                        // 1. ทับ Settings
+                        await setDoc(doc(db, 'settings', 'config'), importedData.settings);
+
+                        // 2. ทับ Donations (ลบของเก่า แล้วลงของใหม่)
+                        const oldDonations = await getDocs(collection(db, 'donations'));
+                        for (const docSnap of oldDonations.docs) { await deleteDoc(docSnap.ref); }
+                        for (const d of importedData.donations) {
+                            const { id, ...data } = d;
+                            await setDoc(doc(db, 'donations', id), data);
+                        }
+
+                        // 3. ทับ News
+                        if (importedData.news) {
+                            const oldNews = await getDocs(collection(db, 'news'));
+                            for (const docSnap of oldNews.docs) { await deleteDoc(docSnap.ref); }
+                            for (const n of importedData.news) {
+                                const { id, ...data } = n;
+                                await setDoc(doc(db, 'news', id), data);
+                            }
+                        }
+
+                        alert("กู้คืนข้อมูลสำเร็จเรียบร้อย! ระบบจะทำการรีโหลดหน้าจอใหม่");
+                        setTimeout(() => window.location.reload(), 1500);
+
+                    } catch (error) {
+                        alert("เกิดข้อผิดพลาด: " + error.message);
+                        console.error(error);
+                    } finally {
+                        setIsUploading(false);
+                        e.target.value = '';
+                    }
+                };
+                reader.readAsText(file);
             };
 
             const handleInsertLineVariable = (variable) => {
@@ -2327,13 +2418,55 @@
                         <DropdownMenu id="group_admin" title="ผู้ดูแลระบบ" icon={ShieldCheck}>
                             <TabButton id="users" label="จัดการผู้ใช้งาน (Users)" icon={Users} />
                             <TabButton id="security" label="รหัสผ่านความปลอดภัย (PIN)" icon={Key} />
+                            <TabButton id="backup" label="สำรอง/กู้คืนข้อมูล (JSON)" icon={Database} /> {/* 🌟 ปุ่มเมนูใหม่ 🌟 */}
                         </DropdownMenu>
                     </div>
                     
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative z-10">
+                        
+                        {/* 🌟 หน้าจอ Backup & Restore JSON 🌟 */}
+                        {activeSection === 'backup' && (
+                            <div className="space-y-6 animate-fade-in">
+                                <h3 className="text-lg font-bold mb-4 flex items-center text-red-600"><Database className="w-5 h-5 mr-2" /> ระบบสำรองและกู้คืนข้อมูล (Database)</h3>
+                                
+                                <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg text-sm text-yellow-800 space-y-2 mb-6">
+                                    <div className="font-bold flex items-center"><AlertTriangle className="w-4 h-4 mr-1" /> ข้อควรระวัง!</div>
+                                    <p>การกู้คืนข้อมูล (Import) จะ <b>"ลบและเขียนทับ"</b> ข้อมูลปัจจุบันในระบบทั้งหมด (รายชื่อ, ยอดเงิน, การตั้งค่า) ด้วยข้อมูลจากไฟล์ JSON โปรดตรวจสอบให้แน่ใจก่อนกดอัปโหลด</p>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Export Card */}
+                                    <div className="border border-blue-200 rounded-xl p-6 bg-blue-50/50 shadow-sm flex flex-col items-center text-center">
+                                        <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4 shadow-sm">
+                                            <Download className="w-8 h-8" />
+                                        </div>
+                                        <h4 className="font-bold text-lg mb-2 text-blue-800">สำรองข้อมูลทั้งหมด (Export)</h4>
+                                        <p className="text-sm text-blue-600/80 mb-6 flex-grow">ดาวน์โหลดการตั้งค่า ข้อมูลผู้บริจาค และข่าวสารทั้งหมด ออกมาเป็นไฟล์ .json เก็บไว้ในเครื่อง</p>
+                                        <button onClick={handleExportJSON} disabled={isUploading} className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition shadow flex justify-center items-center">
+                                            {isUploading ? <Loader className="w-5 h-5 animate-spin mr-2" /> : <Download className="w-5 h-5 mr-2" />}
+                                            {isUploading ? 'กำลังเตรียมไฟล์...' : 'ดาวน์โหลดไฟล์ JSON'}
+                                        </button>
+                                    </div>
+
+                                    {/* Import Card */}
+                                    <div className="border border-red-200 rounded-xl p-6 bg-red-50/50 shadow-sm flex flex-col items-center text-center">
+                                        <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4 shadow-sm">
+                                            <UploadCloud className="w-8 h-8" />
+                                        </div>
+                                        <h4 className="font-bold text-lg mb-2 text-red-800">กู้คืนระบบ (Import)</h4>
+                                        <p className="text-sm text-red-600/80 mb-6 flex-grow">อัปโหลดไฟล์ .json ที่เคยสำรองไว้ เพื่อกู้คืนระบบให้กลับมาเป็นแบบเดิม</p>
+                                        <label className={`w-full ${isUploading ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 cursor-pointer'} text-white font-bold py-3 px-4 rounded-lg transition shadow flex justify-center items-center`}>
+                                            {isUploading ? <><Loader className="w-5 h-5 animate-spin mr-2" /> กำลังกู้คืนข้อมูล...</> : <><UploadCloud className="w-5 h-5 mr-2" /> อัปโหลดไฟล์ JSON</>}
+                                            <input type="file" accept=".json" className="hidden" onChange={handleImportJSON} disabled={isUploading} />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {activeSection === 'general' && (<div className="space-y-6 animate-fade-in"><div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div><h3 className="text-lg font-bold mb-4 flex items-center"><PowerIcon className="w-5 h-5 mr-2" /> สถานะระบบ</h3><div className="space-y-2"><label className={`block p-3 rounded-lg border cursor-pointer ${config.systemStatus === 'open' ? 'bg-green-50 border-green-500 ring-1 ring-green-500' : 'bg-gray-50'}`}><div className="flex items-center"><input type="radio" name="status" className="mr-3" checked={config.systemStatus === 'open'} onChange={() => setConfig({...config, systemStatus: 'open'})} /><div><div className="font-bold text-green-700">เปิดรับบริจาค</div><div className="text-xs text-gray-500">ใช้งานปกติ</div></div></div></label><label className={`block p-3 rounded-lg border cursor-pointer ${config.systemStatus === 'closed' ? 'bg-red-50 border-red-500 ring-1 ring-red-500' : 'bg-gray-50'}`}><div className="flex items-center"><input type="radio" name="status" className="mr-3" checked={config.systemStatus === 'closed'} onChange={() => setConfig({...config, systemStatus: 'closed'})} /><div><div className="font-bold text-red-700">ปิดรับบริจาคชั่วคราว</div><div className="text-xs text-gray-500">แสดงหน้าเว็บ แต่ซ่อนฟอร์ม</div></div></div></label><label className={`block p-3 rounded-lg border cursor-pointer ${config.systemStatus === 'maintenance' ? 'bg-yellow-50 border-yellow-500 ring-1 ring-yellow-500' : 'bg-gray-50'}`}><div className="flex items-center"><input type="radio" name="status" className="mr-3" checked={config.systemStatus === 'maintenance'} onChange={() => setConfig({...config, systemStatus: 'maintenance'})} /><div><div className="font-bold text-yellow-700">ปิดปรับปรุงระบบ</div><div className="text-xs text-gray-500">แสดงหน้าแจ้งปิดปรับปรุง</div></div></div></label></div></div><div><h3 className="text-lg font-bold mb-4 flex items-center"><Palette className="w-5 h-5 mr-2" /> ธีมสีเว็บไซต์</h3><div className="grid grid-cols-3 gap-2 mb-4">{themeColors.map(color => (<button key={color.id} onClick={() => setConfig({...config, themeColor: color.id})} className={`p-2 rounded border flex flex-col items-center gap-1 transition-all ${config.themeColor === color.id ? 'ring-2 ring-offset-2 ring-gray-400 border-gray-400 bg-gray-50' : 'hover:bg-gray-50'}`}><div className={`w-8 h-8 rounded-full ${color.class}`}></div><span className="text-xs">{color.name}</span></button>))}</div><h3 className="text-lg font-bold mb-4 flex items-center"><Type className="w-5 h-5 mr-2" /> ฟอนต์ (แบบตัวอักษร)</h3><select className="w-full p-2 border rounded mb-4" value={config.fontFamily || 'Sarabun'} onChange={e => setConfig({...config, fontFamily: e.target.value})}>{FONT_OPTIONS.map(font => (<option key={font.id} value={font.id}>{font.name}</option>))}</select><div><label className="block text-sm font-medium mb-1">ข้อความวิ่ง (Marquee Text)</label><input type="text" className="w-full p-2 border rounded" value={config.marqueeText || ''} onChange={e => setConfig({...config, marqueeText: e.target.value})} placeholder="เว้นว่างหากไม่ต้องการแสดง" /></div></div></div><div className="pt-4 border-t"><h3 className="text-lg font-bold mb-4 flex items-center"><ImageIcon className="w-5 h-5 mr-2" /> ข้อมูลพื้นฐาน</h3><div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label className="text-sm font-medium">ชื่อวัด / องค์กร</label><input type="text" className="w-full p-2 border rounded" value={config.templeName} onChange={e => setConfig({...config, templeName: e.target.value})} /></div><div><label className="text-sm font-medium">ลิงค์รูปหน้าปก (Banner URL)</label><input type="text" className="w-full p-2 border rounded" value={config.bannerUrl} onChange={e => setConfig({...config, bannerUrl: e.target.value})} /></div></div></div></div>)}
                         
-                        {/* --- เมนูตั้งค่าป๊อปอัปที่เพิ่มมาใหม่ --- */}
+                        {/* --- เมนูตั้งค่าป๊อปอัป --- */}
                         {activeSection === 'popup' && (
                             <div className="space-y-6 animate-fade-in">
                                 <h3 className="text-lg font-bold mb-4 flex items-center"><Megaphone className="w-5 h-5 mr-2 text-orange-600" /> ตั้งค่าป๊อปอัปประกาศหน้าแรก</h3>
@@ -2402,8 +2535,6 @@
                                     <div className="space-y-4">
                                         <div>
                                             <label className="block text-sm font-medium mb-1">รูปภาพประกอบ (วางลิงก์ URL หรือ อัปโหลด)</label>
-                                            
-                                            {/* เพิ่มช่องสำหรับใส่ Link รูปภาพ */}
                                             <input 
                                                 type="text" 
                                                 className="w-full p-2 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-orange-500 mb-3 text-sm" 
@@ -2870,6 +3001,7 @@
                                 </div>
                             </div>
                         )}
+                        
                         {activeSection === 'security' && (
                             <div className="space-y-6 animate-fade-in">
                                 <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-4 text-sm text-yellow-800"><AlertTriangle className="w-4 h-4 inline mr-1" /> เมนูจัดการ Username / Password ย้ายไปอยู่ที่เมนู <b>ผู้ใช้งาน (Users)</b> แล้ว</div>
