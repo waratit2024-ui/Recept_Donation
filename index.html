@@ -434,14 +434,15 @@
             const printDateStr = dateObj.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
             const printTimeStr = dateObj.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
             const amountText = convertToThaiBahtText(donation.amount);
+            
+            // ดึงค่า Settings
             const rcpSettings = settings.receipt || DEFAULT_SETTINGS.receipt;
             
-            // ใช้ URL จาก settings ถ้ามี ไม่งั้นใช้ Default
+            // 🌟 แก้ไขตรงนี้: ให้ดึงรูปลิงก์ ถ้าไม่มีให้ดึงรูป Default มาแสดงเสมอ 🌟
             const templeLogo = rcpSettings.logoUrl || "https://img2.pic.in.th/pic/-Ver.3-1.png";
-            const signatureUrl = rcpSettings.signatureUrl;
-            const stampUrl = rcpSettings.stampUrl;
+            const signatureUrl = rcpSettings.signatureUrl || DEFAULT_SETTINGS.receipt.signatureUrl;
+            const stampUrl = rcpSettings.stampUrl || DEFAULT_SETTINGS.receipt.stampUrl;
             
-            // 🌟 ปรับปรุงการแยกรายการบริจาค (รองรับหลายรายการ) 🌟
             let itemsList = [];
             if (!donation.purpose || donation.purpose === '-') {
                 itemsList.push({ 
@@ -449,18 +450,15 @@
                     amount: (donation.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 }) 
                 });
             } else {
-                // แยกรายการด้วยลูกน้ำ
                 const parts = donation.purpose.split(', ');
                 parts.forEach((part) => {
                     let desc = part;
                     let amtStr = '';
 
-                    // จัดการข้อความโรงทาน
                     if (part === 'จองโรงทาน' && donation.roongTaanDate) {
                         desc = `จองโรงทาน วันที่ ${new Date(donation.roongTaanDate).toLocaleDateString('th-TH')} (${donation.roongTaanNote || ''})`;
                     }
 
-                    // ดึงจำนวนเงินออกจากข้อความ เช่น "(600 บาท)" หรือ "500 บาท"
                     const match1 = desc.match(/\(([\d,\.]+)\s*บาท\)$/);
                     const match2 = desc.match(/\s([\d,\.]+)\s*บาท$/);
 
@@ -472,7 +470,6 @@
                         desc = desc.replace(match2[0], '').trim();
                     }
 
-                    // แปลงรูปแบบตัวเลขให้มีทศนิยม
                     if (amtStr) {
                         const parsedAmt = parseFloat(amtStr.replace(/,/g, ''));
                         if (!isNaN(parsedAmt)) amtStr = parsedAmt.toLocaleString(undefined, { minimumFractionDigits: 2 });
@@ -483,7 +480,6 @@
                     itemsList.push({ description: desc, amount: amtStr });
                 });
 
-                // ถ้าระบบหาจำนวนเงินแยกไม่ได้ และมีรายการเดียว ให้ใส่ยอดรวมทั้งหมด
                 if (itemsList.length === 1 && !itemsList[0].amount && donation.amount > 0) {
                     itemsList[0].amount = (donation.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
                 }
@@ -596,13 +592,11 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {/* 🌟 แสดงตารางจากข้อมูลที่แยกไว้ 🌟 */}
                                             {itemsList.map((item, idx) => (
                                                 <tr key={idx}>
                                                     <td style={{ borderBottom: '1px dashed #999', padding: '12px 8px', textAlign: 'center', verticalAlign: 'top' }}>{idx + 1}</td>
                                                     <td style={{ borderBottom: '1px dashed #999', padding: '12px 8px', verticalAlign: 'top' }}>
                                                         {item.description}
-                                                        {/* นำหมายเหตุไปแปะใต้บรรทัดสุดท้าย */}
                                                         {idx === itemsList.length - 1 && donation.generalNote && (
                                                             <div style={{ fontSize: '13px', color: '#666', marginTop: '4px' }}>หมายเหตุ: {donation.generalNote}</div>
                                                         )}
@@ -613,7 +607,6 @@
                                                 </tr>
                                             ))}
                                             
-                                            {/* เติมช่องว่างให้ครบ 3 บรรทัดถ้าข้อมูลน้อย */}
                                             {itemsList.length < 3 && [...Array(3 - itemsList.length)].map((_, i) => (
                                                 <tr key={`empty-${i}`}>
                                                     <td style={{ padding: '12px 8px' }}>&nbsp;</td><td style={{ padding: '12px 8px' }}></td><td style={{ padding: '12px 8px' }}></td>
