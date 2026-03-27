@@ -3959,7 +3959,7 @@
             return (
                 <div className={`font-sans text-gray-800 flex flex-col min-h-screen`}>
                     
-                    {/* 🌟 จัดการฟอนต์แบบมีประสิทธิภาพ (ดึงจาก <head> และ Netlify) 🌟 */}
+                    {/* 🌟 ตั้งค่าฟอนต์และสไตล์หลักของเว็บ 🌟 */}
                     <style>{`
                         /* --- โหลดฟอนต์ส่วนตัวที่ฝากไว้บน Netlify --- */
                         @font-face {
@@ -3984,7 +3984,7 @@
                         html { font-size: 80% !important; }
                         @media print { html { font-size: 100% !important; } }
                         
-                        /* --- ดึงค่าฟอนต์ที่เลือกมาใช้งาน (Google Fonts โหลดรอใน <head> แล้ว) --- */
+                        /* --- ดึงชื่อฟอนต์ที่เลือกมาใช้งานกับทั้งหน้าเว็บ --- */
                         :root { --font-dynamic: '${settings.fontFamily || 'Prompt'}', sans-serif; }
                         body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, a, div, .font-sans { 
                             font-family: var(--font-dynamic) !important; 
