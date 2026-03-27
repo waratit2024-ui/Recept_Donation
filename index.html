@@ -433,15 +433,22 @@
             const printDateStr = dateObj.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
             const printTimeStr = dateObj.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
             const amountText = convertToThaiBahtText(donation.amount);
-            
-            // ดึงค่า Settings
             const rcpSettings = settings.receipt || DEFAULT_SETTINGS.receipt;
             
-            // 🌟 แก้ไขตรงนี้: ให้ดึงรูปลิงก์ ถ้าไม่มีให้ดึงรูป Default มาแสดงเสมอ 🌟
-            const templeLogo = rcpSettings.logoUrl || "https://img2.pic.in.th/pic/-Ver.3-1.png";
-            const signatureUrl = rcpSettings.signatureUrl || DEFAULT_SETTINGS.receipt.signatureUrl;
-            const stampUrl = rcpSettings.stampUrl || DEFAULT_SETTINGS.receipt.stampUrl;
+            // 🌟 แก้ปัญหา CORS โดยใช้ Proxy Service เป็นตัวกลางดึงรูปภาพ 🌟
+            const getCorsProxyUrl = (url) => {
+                if (!url) return null;
+                // ถ้าเป็น Base64 จากการอัปโหลด ไม่ต้องผ่าน Proxy
+                if (url.startsWith('data:image')) return url; 
+                // ใช้ Proxy Service เพื่อหลีกเลี่ยง CORS Block
+                return `https://wsrv.nl/?url=${encodeURIComponent(url)}&cors=1`;
+            };
+
+            const templeLogo = getCorsProxyUrl(rcpSettings.logoUrl || "https://img2.pic.in.th/pic/-Ver.3-1.png");
+            const signatureUrl = getCorsProxyUrl(rcpSettings.signatureUrl);
+            const stampUrl = getCorsProxyUrl(rcpSettings.stampUrl);
             
+            // 🌟 ปรับปรุงการแยกรายการบริจาค (รองรับหลายรายการ) 🌟
             let itemsList = [];
             if (!donation.purpose || donation.purpose === '-') {
                 itemsList.push({ 
