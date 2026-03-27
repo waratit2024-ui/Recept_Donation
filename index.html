@@ -435,7 +435,11 @@
             const printTimeStr = dateObj.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
             const amountText = convertToThaiBahtText(donation.amount);
             const rcpSettings = settings.receipt || DEFAULT_SETTINGS.receipt;
+            
+            // ใช้ URL จาก settings ถ้ามี ไม่งั้นใช้ Default
             const templeLogo = rcpSettings.logoUrl || "https://img2.pic.in.th/pic/-Ver.3-1.png";
+            const signatureUrl = rcpSettings.signatureUrl;
+            const stampUrl = rcpSettings.stampUrl;
             
             // 🌟 ปรับปรุงการแยกรายการบริจาค (รองรับหลายรายการ) 🌟
             let itemsList = [];
@@ -652,11 +656,11 @@
                                     </div>
                                     <div style={{ width: '35%', position: 'relative' }}>
                                         <div style={{ borderBottom: '1px solid #000', marginBottom: '8px', height: '40px', position: 'relative' }}>
-                                            {rcpSettings.signatureUrl && (
-                                                <img src={rcpSettings.signatureUrl} crossOrigin="anonymous" style={{ position: 'absolute', bottom: '2px', left: '0', right: '0', margin: 'auto', maxHeight: '90px', mixBlendMode: 'multiply' }} alt="ลายเซ็น" />
+                                            {signatureUrl && (
+                                                <img src={signatureUrl} crossOrigin="anonymous" style={{ position: 'absolute', bottom: '2px', left: '0', right: '0', margin: 'auto', maxHeight: '55px', mixBlendMode: 'multiply' }} alt="ลายเซ็น" />
                                             )}
-                                            {rcpSettings.stampUrl && (
-                                                <img src={rcpSettings.stampUrl} crossOrigin="anonymous" style={{ position: 'absolute', top: '-110px', right: '-80px', maxHeight: '320px', mixBlendMode: 'multiply', transform: 'rotate(-15deg)', opacity: 0.8 }} alt="ตราประทับ" />
+                                            {stampUrl && (
+                                                <img src={stampUrl} crossOrigin="anonymous" style={{ position: 'absolute', top: '-35px', right: '-20px', maxHeight: '85px', mixBlendMode: 'multiply', transform: 'rotate(-15deg)', opacity: 0.8 }} alt="ตราประทับ" />
                                             )}
                                         </div>
                                         <p style={{ margin: 0, fontWeight: 'bold' }}>( {rcpSettings.abbotName} )</p>
