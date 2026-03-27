@@ -2365,7 +2365,8 @@
 
             const DropdownMenu = ({ id, title, icon: Icon, children }) => {
                 const isOpen = openDropdown === id;
-                const isActiveGroup = React.Children.toArray(children).some(child => child.props.id === activeSection);
+                // 🌟 เพิ่มการเช็ค child?.props?.id เพื่อป้องกัน Error จากคอมเมนต์หรือช่องว่าง 🌟
+                const isActiveGroup = React.Children.toArray(children).some(child => child && child.props && child.props.id === activeSection);
 
                 return (
                     <div className="relative">
