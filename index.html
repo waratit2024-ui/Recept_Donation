@@ -3953,21 +3953,15 @@
                 );
             }
 
+            // ==========================================
+            // โครงสร้างหน้าเว็บหลัก (Main App Render)
+            // ==========================================
             return (
                 <div className={`font-sans text-gray-800 flex flex-col min-h-screen`}>
                     
-                    {/* ระบบโหลดฟอนต์ Google Fonts အัฃริยะ */}
+                    {/* 🌟 จัดการฟอนต์แบบมีประสิทธิภาพ (ดึงจาก <head> และ Netlify) 🌟 */}
                     <style>{`
-                        ${(() => {
-                            const font = settings.fontFamily || 'Prompt';
-                            if (['Chula', 'Cudlaimue', 'Layiji'].includes(font)) return '';
-                            let googleFontName = font.replace(/ /g, '+');
-                            if (font === 'Playpen Sans Thai') googleFontName = 'Playpen+Sans'; 
-                            let fontWeights = '300,400,500,600,700';
-                            if (font === 'Thasadith') fontWeights = '400,700';
-                            return "@import url('https://fonts.googleapis.com/css2?family=" + googleFontName + ":wght@" + fontWeights + "&display=swap');";
-                        })()}
-
+                        /* --- โหลดฟอนต์ส่วนตัวที่ฝากไว้บน Netlify --- */
                         @font-face {
                           font-family: 'Chula' !important;
                           src: url('https://sunny-croquembouche-9d7d67.netlify.app/fonts/chulabhornlikittext-regular.woff2') format('woff2');
@@ -3989,8 +3983,12 @@
 
                         html { font-size: 80% !important; }
                         @media print { html { font-size: 100% !important; } }
+                        
+                        /* --- ดึงค่าฟอนต์ที่เลือกมาใช้งาน (Google Fonts โหลดรอใน <head> แล้ว) --- */
                         :root { --font-dynamic: '${settings.fontFamily || 'Prompt'}', sans-serif; }
-                        body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, a, div, .font-sans { font-family: var(--font-dynamic) !important; }
+                        body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, p, span, a, div, .font-sans { 
+                            font-family: var(--font-dynamic) !important; 
+                        }
                     `}</style>
 
                     {notification && (<NotificationToast msg={notification.msg} type={notification.type} onClose={() => setNotification(null)} />)}
