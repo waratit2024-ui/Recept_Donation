@@ -2479,8 +2479,17 @@
                                 <div className="border-t pt-6 mt-4">
                                     <h4 className="font-bold text-gray-700 mb-4 flex items-center"><ImageIcon className="w-4 h-4 mr-2"/> รูปล็อกโก้, ลายเซ็น และตราประทับ</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1">รูปโลโก้วัด (แสดงในใบเสร็จและรายงาน)</label>
+                                        
+                                        {/* โลโก้ */}
+                                        <div className="space-y-3">
+                                            <label className="block text-sm font-medium mb-1">รูปโลโก้วัด (วางลิงก์ หรือ อัปโหลด)</label>
+                                            <input 
+                                                type="text" 
+                                                className="w-full p-2 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-orange-500 text-sm" 
+                                                placeholder="วางลิงก์รูป (URL)..." 
+                                                value={config.receipt?.logoUrl?.startsWith('data:image') ? '' : (config.receipt?.logoUrl || '')} 
+                                                onChange={e => setConfig({...config, receipt: { ...config.receipt, logoUrl: e.target.value }})} 
+                                            />
                                             <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer relative">
                                                 <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" accept="image/*" onChange={e => handleReceiptImageUpload(e, 'logoUrl')} disabled={isUploading} />
                                                 {isUploading ? (
@@ -2488,15 +2497,24 @@
                                                 ) : config.receipt?.logoUrl ? (
                                                     <div className="relative pointer-events-none">
                                                         <img src={config.receipt.logoUrl} className="max-h-16 mx-auto object-contain" alt="Logo" />
-                                                        <div className="mt-2 text-xs text-gray-500">คลิกเพื่อเปลี่ยนรูปโลโก้</div>
+                                                        <div className="mt-2 text-xs text-gray-500">คลิกเพื่ออัปโหลดเปลี่ยนรูป</div>
                                                     </div>
                                                 ) : (
                                                     <div className="text-gray-500 pointer-events-none"><UploadCloud className="w-6 h-6 mx-auto mb-1" />อัปโหลดรูปโลโก้วัด</div>
                                                 )}
                                             </div>
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1">รูปลายเซ็น (พื้นหลังใสจะดีที่สุด)</label>
+
+                                        {/* ลายเซ็น */}
+                                        <div className="space-y-3">
+                                            <label className="block text-sm font-medium mb-1">รูปลายเซ็น (วางลิงก์ หรือ อัปโหลด)</label>
+                                            <input 
+                                                type="text" 
+                                                className="w-full p-2 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-orange-500 text-sm" 
+                                                placeholder="วางลิงก์รูปลายเซ็น (URL)..." 
+                                                value={config.receipt?.signatureUrl?.startsWith('data:image') ? '' : (config.receipt?.signatureUrl || '')} 
+                                                onChange={e => setConfig({...config, receipt: { ...config.receipt, signatureUrl: e.target.value }})} 
+                                            />
                                             <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer relative">
                                                 <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" accept="image/*" onChange={e => handleReceiptImageUpload(e, 'signatureUrl')} disabled={isUploading} />
                                                 {isUploading ? (
@@ -2504,15 +2522,24 @@
                                                 ) : config.receipt?.signatureUrl ? (
                                                     <div className="relative pointer-events-none">
                                                         <img src={config.receipt.signatureUrl} className="max-h-16 mx-auto object-contain" style={{ mixBlendMode: 'multiply' }} alt="ลายเซ็น" />
-                                                        <div className="mt-2 text-xs text-gray-500">คลิกเพื่อเปลี่ยนรูปลายเซ็น</div>
+                                                        <div className="mt-2 text-xs text-gray-500">คลิกเพื่ออัปโหลดเปลี่ยนรูป</div>
                                                     </div>
                                                 ) : (
                                                     <div className="text-gray-500 pointer-events-none"><UploadCloud className="w-6 h-6 mx-auto mb-1" />อัปโหลดรูปลายเซ็น</div>
                                                 )}
                                             </div>
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1">รูปตราประทับ (ระบบจะตั้งขนาดพิมพ์ 3 ซม.)</label>
+
+                                        {/* ตราประทับ */}
+                                        <div className="space-y-3">
+                                            <label className="block text-sm font-medium mb-1">รูปตราประทับ (วางลิงก์ หรือ อัปโหลด)</label>
+                                            <input 
+                                                type="text" 
+                                                className="w-full p-2 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-orange-500 text-sm" 
+                                                placeholder="วางลิงก์รูปตราประทับ (URL)..." 
+                                                value={config.receipt?.stampUrl?.startsWith('data:image') ? '' : (config.receipt?.stampUrl || '')} 
+                                                onChange={e => setConfig({...config, receipt: { ...config.receipt, stampUrl: e.target.value }})} 
+                                            />
                                             <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer relative">
                                                 <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" accept="image/*" onChange={e => handleReceiptImageUpload(e, 'stampUrl')} disabled={isUploading} />
                                                 {isUploading ? (
@@ -2520,13 +2547,14 @@
                                                 ) : config.receipt?.stampUrl ? (
                                                     <div className="relative pointer-events-none">
                                                         <img src={config.receipt.stampUrl} alt="Stamp" className="w-16 h-16 mx-auto object-contain" style={{ mixBlendMode: 'multiply' }} />
-                                                        <div className="mt-2 text-xs text-gray-500">คลิกเพื่อเปลี่ยนรูปตราประทับ</div>
+                                                        <div className="mt-2 text-xs text-gray-500">คลิกเพื่ออัปโหลดเปลี่ยนรูป</div>
                                                     </div>
                                                 ) : (
                                                     <div className="text-gray-500 pointer-events-none"><UploadCloud className="w-6 h-6 mx-auto mb-1" />อัปโหลดรูปตราประทับ</div>
                                                 )}
                                             </div>
                                         </div>
+
                                     </div>
                                 </div>
                             </div>
